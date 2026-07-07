@@ -15,11 +15,14 @@ export function OnboardingScreen({
   householdName,
   darkMode,
   completeOnboarding,
+  openSettingsAfterOnboarding,
 }: {
   householdName: string;
   darkMode: boolean;
   completeOnboarding: (name: string, members: OnboardingMemberInput[]) => void;
+  openSettingsAfterOnboarding: () => void;
 }) {
+  const [setupMode, setSetupMode] = useState<"create" | "join">("create");
   const [draftName, setDraftName] = useState(householdName);
   const [founderName, setFounderName] = useState("");
   const [memberName, setMemberName] = useState("");
@@ -44,7 +47,11 @@ export function OnboardingScreen({
       return;
     }
 
-    completeOnboarding(draftName.trim() || "Mein Haushalt", [{ name: founderName.trim(), role: "owner" }, ...members]);
+    const onboardingMembers = setupMode === "join" ? [{ name: founderName.trim(), role: "owner" }] : [{ name: founderName.trim(), role: "owner" }, ...members];
+    completeOnboarding(draftName.trim() || "Mein Haushalt", onboardingMembers);
+    if (setupMode === "join") {
+      openSettingsAfterOnboarding();
+    }
   }
 
   return (
@@ -56,6 +63,27 @@ export function OnboardingScreen({
           Homely funktioniert fuer Familien, Wohngemeinschaften und andere Haushalte. Du bist zuerst der Gruender und kannst weitere Personen
           hinzufuegen.
         </Text>
+        <View style={styles.setupChoiceRow}>
+          {[
+            { id: "create", title: "Neu starten", text: "Haushalt lokal anlegen und spaeter optional synchronisieren." },
+            { id: "join", title: "Einladung", text: "Erst dich selbst anlegen, danach unter Konto per Code beitreten." },
+          ].map((item) => {
+            const active = setupMode === item.id;
+            return (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.setupChoiceCard, themed.card, active && themed.active]}
+                accessibilityRole="button"
+                accessibilityLabel={item.title}
+                accessibilityState={{ selected: active }}
+                onPress={() => setSetupMode(item.id as "create" | "join")}
+              >
+                <Text style={[styles.taskTitle, themed.text, active && styles.segmentButtonTextActive]}>{item.title}</Text>
+                <Text style={[styles.taskMeta, themed.muted, active && styles.segmentButtonTextActive]}>{item.text}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
         <TextInput
           style={[styles.input, themed.input, darkMode && styles.inputDark]}
           value={draftName}
@@ -72,34 +100,44 @@ export function OnboardingScreen({
           placeholder="Dein Vorname"
           placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
         />
-        <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Weitere Haushaltsmitglieder</Text>
-        <TextInput
-          style={[styles.input, themed.input, darkMode && styles.inputDark]}
-          value={memberName}
-          onChangeText={setMemberName}
-          accessibilityLabel="Name eines weiteren Haushaltsmitglieds"
-          placeholder="Vorname oder Anzeigename"
-          placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
-        />
-        <View style={styles.segmented}>
-          {manageableRoles.map((role) => (
-            <TouchableOpacity
-              key={role.id}
-              style={[styles.segmentButton, themed.buttonSurface, memberRole === role.id && themed.active]}
-              accessibilityRole="button"
-              accessibilityLabel={`Rolle ${role.label}`}
-              accessibilityState={{ selected: memberRole === role.id }}
-              onPress={() => setMemberRole(role.id)}
-            >
-              <Text style={[styles.segmentButtonText, themed.muted, memberRole === role.id && styles.segmentButtonTextActive]}>{role.label}</Text>
+        {setupMode === "create" ? (
+          <>
+            <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Weitere Haushaltsmitglieder</Text>
+            <TextInput
+              style={[styles.input, themed.input, darkMode && styles.inputDark]}
+              value={memberName}
+              onChangeText={setMemberName}
+              accessibilityLabel="Name eines weiteren Haushaltsmitglieds"
+              placeholder="Vorname oder Anzeigename"
+              placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
+            />
+            <View style={styles.segmented}>
+              {manageableRoles.map((role) => (
+                <TouchableOpacity
+                  key={role.id}
+                  style={[styles.segmentButton, themed.buttonSurface, memberRole === role.id && themed.active]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Rolle ${role.label}`}
+                  accessibilityState={{ selected: memberRole === role.id }}
+                  onPress={() => setMemberRole(role.id)}
+                >
+                  <Text style={[styles.segmentButtonText, themed.muted, memberRole === role.id && styles.segmentButtonTextActive]}>{role.label}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+            <TouchableOpacity style={[styles.secondaryActionFull, themed.soft]} accessibilityRole="button" accessibilityLabel="Person hinzufuegen" onPress={addHouseholdMember}>
+              <Text style={[styles.secondaryActionText, themed.muted]}>Person hinzufuegen</Text>
             </TouchableOpacity>
-          ))}
-        </View>
-        <TouchableOpacity style={[styles.secondaryActionFull, themed.soft]} accessibilityRole="button" accessibilityLabel="Person hinzufuegen" onPress={addHouseholdMember}>
-          <Text style={[styles.secondaryActionText, themed.muted]}>Person hinzufuegen</Text>
-        </TouchableOpacity>
+          </>
+        ) : (
+          <View style={[styles.compactInfoBox, themed.soft]}>
+            <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+              Nach dem Start oeffnet Homely den Kontobereich. Dort meldest du dich an und nimmst die Einladung mit dem Code an.
+            </Text>
+          </View>
+        )}
         <View style={styles.onboardingList}>
-          {[{ name: founderName || "Du", role: "owner" }, ...members].map((member, index) => (
+          {[{ name: founderName || "Du", role: "owner" }, ...(setupMode === "create" ? members : [])].map((member, index) => (
             <View key={`${member.name}-${index}`} style={[styles.onboardingMember, darkMode && styles.rowDark, themed.card]}>
               <View style={[styles.dot, { backgroundColor: memberColors[index % memberColors.length] }]} />
               <Text style={[styles.scoreName, themed.text, darkMode && styles.textDark]}>{member.name}</Text>
@@ -113,7 +151,7 @@ export function OnboardingScreen({
           ))}
         </View>
         <TouchableOpacity style={[styles.primaryAction, themed.primary]} accessibilityRole="button" accessibilityLabel="Haushalt starten" onPress={finish}>
-          <Text style={styles.primaryActionText}>Haushalt starten</Text>
+          <Text style={styles.primaryActionText}>{setupMode === "join" ? "Zum Konto weiter" : "Haushalt starten"}</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>

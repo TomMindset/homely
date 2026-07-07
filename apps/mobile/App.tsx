@@ -61,6 +61,7 @@ export default function App() {
               householdName={planner.familyName}
               darkMode={planner.darkMode}
               completeOnboarding={planner.completeOnboarding}
+              openSettingsAfterOnboarding={() => planner.setView("settings")}
             />
           </View>
         </SafeAreaView>
@@ -112,6 +113,8 @@ export default function App() {
               members={planner.members}
               darkMode={planner.darkMode}
               activeMemberId={planner.activeMemberId}
+              canManagePlan={planner.canManagePlan}
+              setView={planner.setView}
               toggleAssignment={planner.toggleAssignment}
             />
           )}

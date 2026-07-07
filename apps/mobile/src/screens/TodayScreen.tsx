@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Text, TouchableOpacity, View } from "react-native";
-import { categoryLabels, formatUnits, reminderLabel } from "../constants/planner";
+import { categoryLabels, formatUnits, reminderLabel, type ViewId } from "../constants/planner";
 import { seedData } from "../data/seedData";
 import { styles } from "../styles/plannerStyles";
 import { useThemeStyles } from "../theme/useThemeStyles";
@@ -13,6 +13,8 @@ export function TodayScreen({
   members,
   darkMode,
   activeMemberId,
+  canManagePlan,
+  setView,
   toggleAssignment,
 }: {
   assignments: Assignment[];
@@ -21,6 +23,8 @@ export function TodayScreen({
   members: Member[];
   darkMode: boolean;
   activeMemberId: string;
+  canManagePlan: boolean;
+  setView: (view: ViewId) => void;
   toggleAssignment: (id: string, completedByMemberId?: string) => void;
 }) {
   const themed = useThemeStyles(darkMode);
@@ -58,9 +62,31 @@ export function TodayScreen({
         })}
       </View>
       {!displayedAssignments.length && (
-        <Text style={[styles.permissionHint, themed.muted, darkMode && styles.mutedDark]}>
-          Fuer diese Auswahl sind heute keine Aufgaben geplant.
-        </Text>
+        <View style={[styles.emptyStateCard, themed.soft]}>
+          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>
+            {mode === "mine" ? "Heute ist fuer dich nichts offen." : "Heute ist nichts geplant."}
+          </Text>
+          <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+            {mode === "mine" && assignments.length
+              ? "Im Haushalt gibt es noch Aufgaben fuer andere Personen."
+              : "Homely bleibt ruhig, wenn der Tag frei ist. Plane neue Aufgaben oder pruefe die Woche."}
+          </Text>
+          <View style={styles.editorActions}>
+            {mode === "mine" && assignments.length > 0 && (
+              <TouchableOpacity style={[styles.secondaryAction, themed.buttonSurface]} accessibilityRole="button" onPress={() => setMode("all")}>
+                <Text style={[styles.secondaryActionText, themed.muted]}>Alle anzeigen</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={[styles.secondaryAction, themed.buttonSurface]} accessibilityRole="button" onPress={() => setView("week")}>
+              <Text style={[styles.secondaryActionText, themed.muted]}>Woche pruefen</Text>
+            </TouchableOpacity>
+            {canManagePlan && (
+              <TouchableOpacity style={[styles.primaryActionInline, themed.primary]} accessibilityRole="button" onPress={() => setView("tasks")}>
+                <Text style={styles.primaryActionText}>Aufgaben planen</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
       )}
       {displayedAssignments.map((assignment) => (
         <TaskRow

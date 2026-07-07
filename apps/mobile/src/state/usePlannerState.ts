@@ -411,7 +411,7 @@ export function usePlannerState() {
     () => weekAssignments.filter((assignment) => selectedMemberId === "all" || assignment.memberId === selectedMemberId),
     [selectedMemberId, weekAssignments],
   );
-  const selectedDayAssignments = visibleAssignments.filter((assignment) => assignment.day === selectedDay);
+  const selectedDayAssignments = weekAssignments.filter((assignment) => assignment.day === selectedDay);
   const weekMeals = getWeekMeals(meals, seedData.family.year, selectedWeek);
   const selectedMeal = weekMeals.find((meal) => meal.day === selectedDay);
   const founderMember = members.find((member) => member.role === "owner");
