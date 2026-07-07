@@ -1,6 +1,6 @@
 # Homely Play-Store Data Safety Entwurf
 
-Stand: 2026-07-03
+Stand: 2026-07-07
 
 Dieser Entwurf hilft beim Ausfuellen des Google-Play-Data-Safety-Formulars fuer **Homely: Haushalts Manager**.
 
@@ -13,7 +13,7 @@ Aktueller Vorschlag:
 - Data collection: Ja
 - Data sharing: Nein, sofern Supabase als Auftragsverarbeiter/Dienstleister fuer App-Funktionalitaet genutzt und keine Daten fuer eigene Drittzwecke weitergegeben werden
 - Daten werden verschluesselt uebertragen: Ja, ueber HTTPS/TLS
-- Datenloeschung: Cloud-Haushalt kann durch den Gruender geloescht werden; In-App-Kontoloeschung ist per Edge Function vorbereitet; Webressource fuer Google Play fehlt noch
+- Datenloeschung: Cloud-Haushalt kann durch den Gruender geloescht werden; In-App-Kontoloeschung ist per Edge Function vorbereitet; Webressource fuer Google Play ist unter `https://aesti.de/konto-loeschen` vorbereitet
 - Keine Werbung
 - Keine Analytics
 - Keine Standort-, Kontakt-, Kamera-, Mikrofon- oder Kalenderberechtigungen
@@ -43,10 +43,10 @@ Begruendung: Supabase-Endpunkte laufen ueber HTTPS/TLS.
 Vorschlag fuer Store-Launch:
 
 - Lokal: Ja, ueber lokale Ruecksetzung/App-Datenloeschung.
-- Konto: In-App-Loeschung per Edge Function vorbereitet; zusaetzlicher Weblink fuer Google Play erforderlich.
+- Konto: In-App-Loeschung per Edge Function vorbereitet; zusaetzlicher Weblink fuer Google Play unter `https://aesti.de/konto-loeschen`.
 - Haushalt: Gruender koennen den aktiven Cloud-Haushalt in der App loeschen.
 
-Aktueller Status: **Haushaltsloeschung und In-App-Kontoloeschung technisch vorbereitet, Webressource noch offen.**
+Aktueller Status: **Haushaltsloeschung, In-App-Kontoloeschung und Webressource sind technisch vorbereitet.**
 
 ## Datenkategorien nach Google Play
 

@@ -8,10 +8,11 @@ Dieses Dokument beschreibt die technische Build-Vorbereitung fuer **Homely: Haus
 
 - Expo SDK 54
 - React Native 0.81.5
-- App-Version: `0.1.0`
+- App-Version: `1.0.0`
 - Android Package: `com.homely.haushaltsmanager`
 - Android `versionCode`: `2`
-- Expo/EAS Slug: `right-to-lead` intern, Projektname `Homely`
+- Expo App-Slug: `homely`
+- EAS-Projekt historisch verknuepft mit Project ID `553f7f58-5e68-46ca-988a-99c7cf2e3a74`
 - EAS Dashboard-Name: `Homely`
 - EAS Project ID: `553f7f58-5e68-46ca-988a-99c7cf2e3a74`
 - EAS-Konfiguration vorhanden: `apps/mobile/eas.json`
@@ -141,10 +142,11 @@ Vor dem ersten echten Production-Build:
 
 Der erste Production-Build wurde bewusst gestartet und hat gezeigt:
 
-- Die alte EAS Project ID `553f7f58-5e68-46ca-988a-99c7cf2e3a74` zeigt serverseitig noch auf `@tommindsets-team/right-to-lead`.
-- Das Dashboard-Feld "Preview subdomain" wurde auf `homely-haushaltsmanager` gesetzt, `eas project:info` zeigt aber weiterhin `@tommindsets-team/right-to-lead`.
+- Die alte EAS Project ID `553f7f58-5e68-46ca-988a-99c7cf2e3a74` zeigte serverseitig zunaechst auf `@tommindsets-team/right-to-lead`.
+- Das Dashboard-Feld "Preview subdomain" wurde auf `homely-haushaltsmanager` gesetzt.
+- Lokal ist der Expo-Slug fuer den Store-Stand auf `homely` gesetzt.
 - Fuer Google Play sind Android Package `com.homely.haushaltsmanager`, App-Name `Homely`, Versionierung und AAB entscheidend.
-- Der interne EAS-Slug `right-to-lead` ist deshalb fuer den AAB-Build akzeptabel, solange die Store-relevanten Felder korrekt bleiben.
+- Falls EAS weiterhin historische Build-URLs mit `right-to-lead` zeigt, sind fuer Google Play Android Package `com.homely.haushaltsmanager`, App-Name, Versionierung und AAB entscheidend.
 
 ## Troubleshooting 2026-07-04
 
@@ -210,7 +212,7 @@ Optionaler spaeterer Aufraeumschritt im Expo/EAS Dashboard:
 - Logs: https://expo.dev/accounts/tommindsets-team/projects/right-to-lead/builds/150d47cd-46f3-4ed4-af3a-be5cea351020
 - AAB: https://expo.dev/artifacts/eas/-wByw0wW_KY_-5JgJqCeiqp6K758qugV2t2t9GIbUbY.aab
 
-Hinweis: Dieser Build ist der erste store-faehige Android App Bundle Build fuer Homely. Der interne EAS-Slug lautet weiterhin `right-to-lead`; Projektname, App-Name und Android Package sind fuer Google Play auf Homely ausgerichtet.
+Hinweis: Dieser Build war der erste store-faehige Android App Bundle Build fuer Homely. Fuer den Go-live-Stand ist ein neuer Production-Build mit App-Version `1.0.0` vorgesehen.
 
 ## Warum ein AAB bewusst als eigener Schritt kommt
 

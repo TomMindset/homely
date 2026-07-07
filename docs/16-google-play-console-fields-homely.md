@@ -1,6 +1,6 @@
 # Homely Google-Play-Console-Felder
 
-Stand: 2026-07-04
+Stand: 2026-07-07
 
 Arbeitsdokument fuer die spaetere Eintragung in der Google Play Console.
 
@@ -52,11 +52,7 @@ Die aktuelle Version nutzt E-Mail-Konten und Haushalts-Sync, wenn diese Funktion
 
 Homely kann lokal getestet werden. Fuer Konto- und Sync-Funktionen ist ein Testkonto erforderlich.
 
-TODO vor Upload:
-
-- Review-Test-E-Mail festlegen
-- Review-Test-Passwort festlegen
-- Test-Haushalt ohne Echtdaten vorbereiten
+Review-Zugangsdaten werden nicht im Repository gespeichert. Sie werden erst beim Upload vertraulich in der Play Console unter den App-Zugriffshinweisen hinterlegt.
 
 Vorschlag fuer Review-Hinweis:
 
@@ -110,7 +106,7 @@ Arbeitsentscheidung:
 - Keine offenen Kommunikationsfunktionen
 - Keine Standort- oder Kontaktberechtigungen
 
-Vor Veroeffentlichung final pruefen:
+Vor Einreichung in der Play Console bewusst entscheiden:
 
 - Ob Kinder direkt als Zielgruppe angegeben werden sollen
 - Ob Google-Play-Families-Anforderungen beruehrt sind

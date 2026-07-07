@@ -249,8 +249,8 @@ check("Android production build config is Play-ready", () => {
 
   assert(appConfig.name === "Homely", "Expo app name should be Homely");
   assert(
-    ["homely-haushaltsmanager", "right-to-lead"].includes(appConfig.slug),
-    "Expo slug should be homely-haushaltsmanager or the currently linked EAS project slug",
+    ["homely", "homely-haushaltsmanager", "right-to-lead"].includes(appConfig.slug),
+    "Expo slug should be homely, homely-haushaltsmanager or the currently linked EAS project slug",
   );
   assert(appConfig.scheme === "homely", "Deep-link scheme should be homely");
   assert(appConfig.android?.package === "com.homely.haushaltsmanager", "Android package should be stable for Google Play");

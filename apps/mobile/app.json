@@ -1,9 +1,9 @@
 {
   "expo": {
     "name": "Homely",
-    "slug": "right-to-lead",
+    "slug": "homely",
     "scheme": "homely",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "description": "Haushalts Manager fuer Aufgaben, Essen und Fairness in Familien und WGs.",
     "orientation": "portrait",
     "userInterfaceStyle": "light",

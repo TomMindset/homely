@@ -58,7 +58,7 @@ Aktuelle Entscheidung:
 
 - App-Name finalisieren: `Homely: Haushalts Manager`
 - Package Name finalisieren: `com.homely.haushaltsmanager`
-- Expo Slug finalisieren: `homely-haushaltsmanager`
+- Expo Slug finalisiert: `homely`
 - App-Icon und Splash Screen erstellen: erledigt als erstes Homely-Branding-Set
 - Screenshots fuer Play Store erzeugen: Storyboard vorhanden, echte Screenshots offen
 - Kurzbeschreibung und Langbeschreibung schreiben: Arbeitsfassung vorhanden

@@ -1,8 +1,8 @@
 # Datenschutzerklaerung fuer Homely: Haushalts Manager
 
-Stand: 2026-07-03
+Stand: 2026-07-07
 
-Diese Datenschutzerklaerung ist ein Entwurf fuer die App **Homely: Haushalts Manager**. Vor einer Veroeffentlichung im Google Play Store muss sie mit den finalen technischen Funktionen, dem tatsaechlichen Anbieter und einer oeffentlichen URL abgeglichen werden.
+Diese Datenschutzerklaerung beschreibt die aktuelle Version der App **Homely: Haushalts Manager**.
 
 ## 1. Anbieter
 
@@ -10,8 +10,7 @@ Anbieter der App:
 
 Thomas Hoffmann  
 Gress-Straße 1, 71384 Weinstadt, Deutschland  
-TODO: E-Mail-Adresse fuer Datenschutzanfragen  
-TODO: Support-E-Mail-Adresse  
+E-Mail fuer Datenschutz und Support: hoffmann.thomas@gmx.de  
 
 ## 2. Zweck der App
 
@@ -81,9 +80,11 @@ Fuer Sync-Daten ist eine Cloud-Haushaltsloeschung fuer den Gruender vorgesehen. 
 
 Fuer das Auth-Konto selbst ist eine In-App-Kontoloeschung per Supabase Edge Function vorgesehen. Dabei werden zugehoerige Homely-Cloud-Daten vorbereitet und anschliessend der Supabase-Auth-User serverseitig geloescht.
 
-Zusaetzlich muss fuer Google Play eine oeffentliche Webressource bereitgestellt werden, ueber die Nutzer die Kontoloeschung auch ohne installierte App beantragen koennen.
+Zusaetzlich steht fuer Google Play eine oeffentliche Webressource bereit, ueber die Nutzer die Kontoloeschung auch ohne installierte App beantragen koennen:
 
-TODO: Oeffentliche Kontoloesch-URL und Supportkontakt beschreiben.
+https://aesti.de/konto-loeschen
+
+Loeschanfragen per E-Mail werden in der Regel innerhalb von 7 Tagen bearbeitet.
 
 ## 11. Aenderungen
 
@@ -93,4 +94,4 @@ Diese Datenschutzerklaerung kann angepasst werden, wenn sich Funktionen, technis
 
 Bei Fragen zum Datenschutz:
 
-TODO: Datenschutz-E-Mail-Adresse
+hoffmann.thomas@gmx.de

@@ -1,6 +1,6 @@
 # Homely Play-Store-Listing
 
-Stand: 2026-07-03
+Stand: 2026-07-07
 
 Arbeitsfassung fuer den Google Play Store.
 
@@ -18,7 +18,7 @@ Homely: Haushalts Manager
 
 ## Expo/EAS
 
-- App-Slug: `homely-haushaltsmanager`
+- App-Slug: `homely`
 - EAS Project ID: `553f7f58-5e68-46ca-988a-99c7cf2e3a74`
 - Android App Bundle fuer Produktion: `.aab`
 

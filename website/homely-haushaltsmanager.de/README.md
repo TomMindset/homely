@@ -4,7 +4,7 @@ Uebergangs-Domain fuer GitHub Pages: `aesti.de`
 
 Finale Domain spaeter: `homely-haushaltsmanager.de`
 
-Stand: 2026-07-04
+Stand: 2026-07-07
 
 Diese statische Website ist fuer Google Play und den spaeteren Store-Auftritt von **Homely: Haushalts Manager** vorbereitet.
 
@@ -20,9 +20,9 @@ Je nach Hosting koennen die Dateien als `.html` ausgeliefert oder per Rewrite oh
 ## Dateien
 
 - `index.html`: Produkt-/Startseite
-- `datenschutz.html`: Datenschutzerklaerung als Entwurf
+- `datenschutz.html`: Datenschutzerklaerung
 - `konto-loeschen.html`: Google-Play-Kontoloeschseite
-- `impressum.html`: Impressum-Platzhalter
+- `impressum.html`: Impressum
 - `styles.css`: gemeinsames Styling
 - `assets/homely-icon.png`: Homely Logo/Icon
 - `_redirects`: Netlify-Rewrites fuer saubere URLs
@@ -31,15 +31,12 @@ Je nach Hosting koennen die Dateien als `.html` ausgeliefert oder per Rewrite oh
 - `robots.txt`: Suchmaschinenfreigabe
 - `sitemap.xml`: Sitemap fuer die Ziel-Domain
 
-## Offene Angaben vor Veroeffentlichung
+## Live-Stand
 
-- Anbietername/Firma
-- Anschrift
-- Datenschutz-E-Mail
-- Support-E-Mail
-- Impressumspflichtige Angaben
-- Bearbeitungsfrist fuer Kontoloesch-Anfragen
-- Rechtliche Pruefung der Datenschutzerklaerung
+- Anbieter: Thomas Hoffmann
+- Anschrift: Gress-Straße 1, 71384 Weinstadt
+- Kontakt fuer Datenschutz, Support und Kontoloeschung: hoffmann.thomas@gmx.de
+- Kontoloesch-Anfragen werden in der Regel innerhalb von 7 Tagen bearbeitet.
 
 ## Hosting-Optionen
 
