@@ -18,7 +18,8 @@ Homely: Haushalts Manager
 
 ## Expo/EAS
 
-- App-Slug: `homely`
+- Produkt-/Repo-Name: `homely`
+- EAS-interner Slug fuer dieses verknuepfte Projekt: `right-to-lead`
 - EAS Project ID: `553f7f58-5e68-46ca-988a-99c7cf2e3a74`
 - Android App Bundle fuer Produktion: `.aab`
 

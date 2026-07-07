@@ -10,9 +10,10 @@ Dieses Dokument beschreibt die technische Build-Vorbereitung fuer **Homely: Haus
 - React Native 0.81.5
 - App-Version: `1.0.0`
 - Android Package: `com.homely.haushaltsmanager`
-- Android `versionCode`: `2`
-- Expo App-Slug: `homely`
-- EAS-Projekt historisch verknuepft mit Project ID `553f7f58-5e68-46ca-988a-99c7cf2e3a74`
+- Android `versionCode`: `4`
+- Produkt-/Repo-Name: `homely`
+- Expo/EAS-interner Slug fuer das verknuepfte Projekt: `right-to-lead`
+- EAS-Projekt verknuepft mit Project ID `553f7f58-5e68-46ca-988a-99c7cf2e3a74`
 - EAS Dashboard-Name: `Homely`
 - EAS Project ID: `553f7f58-5e68-46ca-988a-99c7cf2e3a74`
 - EAS-Konfiguration vorhanden: `apps/mobile/eas.json`
@@ -144,7 +145,7 @@ Der erste Production-Build wurde bewusst gestartet und hat gezeigt:
 
 - Die alte EAS Project ID `553f7f58-5e68-46ca-988a-99c7cf2e3a74` zeigte serverseitig zunaechst auf `@tommindsets-team/right-to-lead`.
 - Das Dashboard-Feld "Preview subdomain" wurde auf `homely-haushaltsmanager` gesetzt.
-- Lokal ist der Expo-Slug fuer den Store-Stand auf `homely` gesetzt.
+- Lokal bleibt der Expo-Slug fuer EAS-Builds auf `right-to-lead`, weil die bestehende Project ID diesen Slug serverseitig erwartet.
 - Fuer Google Play sind Android Package `com.homely.haushaltsmanager`, App-Name `Homely`, Versionierung und AAB entscheidend.
 - Falls EAS weiterhin historische Build-URLs mit `right-to-lead` zeigt, sind fuer Google Play Android Package `com.homely.haushaltsmanager`, App-Name, Versionierung und AAB entscheidend.
 

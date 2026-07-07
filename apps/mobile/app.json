@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Homely",
-    "slug": "homely",
+    "slug": "right-to-lead",
     "scheme": "homely",
     "version": "1.0.0",
     "description": "Haushalts Manager fuer Aufgaben, Essen und Fairness in Familien und WGs.",
@@ -18,7 +18,7 @@
     ],
     "android": {
       "package": "com.homely.haushaltsmanager",
-      "versionCode": 2,
+      "versionCode": 4,
       "permissions": [],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
