@@ -1,0 +1,35 @@
+{
+  "expo": {
+    "name": "Homely",
+    "slug": "right-to-lead",
+    "scheme": "homely",
+    "version": "0.1.0",
+    "description": "Haushalts Manager fuer Aufgaben, Essen und Fairness in Familien und WGs.",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#F7F2E8"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.homely.haushaltsmanager",
+      "versionCode": 2,
+      "permissions": [],
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#256F63"
+      }
+    },
+    "owner": "tommindsets-team",
+    "extra": {
+      "eas": {
+        "projectId": "553f7f58-5e68-46ca-988a-99c7cf2e3a74"
+      }
+    }
+  }
+}
