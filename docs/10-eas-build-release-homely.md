@@ -215,6 +215,20 @@ Optionaler spaeterer Aufraeumschritt im Expo/EAS Dashboard:
 
 Hinweis: Dieser Build war der erste store-faehige Android App Bundle Build fuer Homely. Fuer den Go-live-Stand ist ein neuer Production-Build mit App-Version `1.0.0` vorgesehen.
 
+## Go-live-Kandidat 2026-07-07
+
+- App-Version: `1.0.0`
+- Android Build Version / `versionCode`: `4`
+- EAS Production-Env: `EXPO_PUBLIC_SUPABASE_URL` und `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` gesetzt
+- Build ID: `5923f656-90e0-4c11-8e71-670074981e13`
+- Status zuletzt: `IN_QUEUE`
+- Logs: https://expo.dev/accounts/tommindsets-team/projects/right-to-lead/builds/5923f656-90e0-4c11-8e71-670074981e13
+- Relevante Website-URLs live geprueft:
+  - https://aesti.de/
+  - https://aesti.de/datenschutz
+  - https://aesti.de/konto-loeschen
+  - https://aesti.de/impressum
+
 ## Warum ein AAB bewusst als eigener Schritt kommt
 
 Ein echtes Android App Bundle wird remote ueber EAS erzeugt und betrifft:
