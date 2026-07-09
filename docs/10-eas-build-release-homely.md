@@ -221,8 +221,11 @@ Hinweis: Dieser Build war der erste store-faehige Android App Bundle Build fuer 
 - Android Build Version / `versionCode`: `4`
 - EAS Production-Env: `EXPO_PUBLIC_SUPABASE_URL` und `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` gesetzt
 - Build ID: `5923f656-90e0-4c11-8e71-670074981e13`
-- Status zuletzt: `IN_QUEUE`
+- Status zuletzt: `FINISHED`
 - Logs: https://expo.dev/accounts/tommindsets-team/projects/right-to-lead/builds/5923f656-90e0-4c11-8e71-670074981e13
+- AAB: https://expo.dev/artifacts/eas/CiEYZeiE3LVycOqnL_lRBzDxrLkBSiundJAQeVXfBTE.aab
+- Lokale Kopie: `artifacts/homely-1.0.0-versionCode4.aab`
+- SHA-256: `7F742D74F2ADD21E50AC401C6008592F31505230FC9291FF902FB399CC07F89B`
 - Relevante Website-URLs live geprueft:
   - https://aesti.de/
   - https://aesti.de/datenschutz

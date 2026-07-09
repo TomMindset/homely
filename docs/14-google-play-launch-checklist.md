@@ -1,6 +1,6 @@
 # Homely Google-Play-Launch-Checkliste
 
-Stand: 2026-07-03
+Stand: 2026-07-10
 
 Ziel: **Homely: Haushalts Manager** als testbare und spaeter oeffentlich anbietbare Android-App in Google Play bringen.
 
@@ -8,14 +8,14 @@ Ziel: **Homely: Haushalts Manager** als testbare und spaeter oeffentlich anbietb
 
 | Bereich | Status | Naechster Schritt |
 |---|---|---|
-| Marke/App-Name | In Arbeit | Store-Grafiken und Screenshots finalisieren |
+| Marke/App-Name | Erledigt | Store-Grafiken und Screenshots finalisieren |
 | Android Package | Erledigt | `com.homely.haushaltsmanager` beibehalten |
-| EAS Build | In Arbeit | Neuen Preview-Build mit Homely-Slug erzeugen |
-| Supabase Sync | In Arbeit | Redirects, Edge Function deployen und Review-Testkonto finalisieren |
-| Datenschutz | Entwurf | Oeffentliche Datenschutz-URL bereitstellen |
+| EAS Build | Erledigt | Production-AAB `1.0.0` / `versionCode 4` in Play Console hochladen |
+| Supabase Sync | In Arbeit | Review-Testkonto finalisieren |
+| Datenschutz | Erledigt | URLs in Play Console eintragen |
 | Data Safety | Entwurf | In Play Console eintragen und gegen App pruefen |
 | Store Listing | Entwurf | Texte, Kategorie und Screenshots final abstimmen |
-| Target API | Zu pruefen | AAB nach Build auf API 35+ pruefen |
+| Target API | Zu pruefen | AAB im Play-Upload validieren |
 | Interner Test | Offen | Google-Play-Testtrack einrichten |
 | Production Rollout | Offen | Erst nach internem Test und Review |
 
@@ -29,7 +29,7 @@ Ziel: **Homely: Haushalts Manager** als testbare und spaeter oeffentlich anbietb
 - Supabase RLS fuer alle Haushaltstabellen aktiv.
 - Cloud-Haushaltsloeschung fuer Gruender vorhanden.
 - In-App-Kontoloeschung per Edge Function vorhanden.
-- Webressource fuer Kontoloesch-Anfragen oeffentlich bereitstellen.
+- Webressource fuer Kontoloesch-Anfragen oeffentlich bereitgestellt.
 - Keine Secret Keys im Client.
 - E-Mail-Redirects zeigen nicht auf `localhost`.
 
@@ -64,16 +64,15 @@ Ziel: **Homely: Haushalts Manager** als testbare und spaeter oeffentlich anbietb
 1. `pnpm run typecheck`
 2. `pnpm run check`
 3. Optional `pnpm run check:live`
-4. Neuer EAS Preview Build
-5. Installation auf Samsung
-6. Manuelle Hauptflows pruefen
-7. Fehlerliste priorisieren
-8. Production-AAB bauen
-9. Interner Testtrack in Google Play
+4. Installation auf Samsung
+5. Manuelle Hauptflows pruefen
+6. Fehlerliste priorisieren
+7. Production-AAB in Play Console hochladen
+8. Interner Testtrack in Google Play
 
 ## Review-Testkonto
 
-Vor dem Upload festlegen:
+Vor dem Upload in der Play Console vertraulich festlegen:
 
 - Test-E-Mail
 - Test-Passwort
@@ -84,11 +83,8 @@ Keine privaten Familien- oder Echtdaten fuer Review-Testkonto verwenden.
 
 ## Noch zu entscheiden
 
-- Anbietername/Firma fuer Store und Datenschutz.
-- Support-E-Mail.
-- Datenschutz-Hosting: eigene Website, Supabase Storage, GitHub Pages oder anderer Host.
 - Ob Version 1 schon oeffentlich startet oder zuerst als geschlossener Test.
-- Welche oeffentliche URL fuer Kontoloesch-Anfragen in Google Play eingetragen wird.
+- Review-Testkonto und Test-Haushalt ohne Echtdaten.
 
 ## Website-Entwurf
 
@@ -96,7 +92,7 @@ Der statische Entwurf fuer die spaetere Domain liegt hier:
 
 `website/homely-haushaltsmanager.de`
 
-Geplante URLs:
+Live-URLs:
 
 - Datenschutz: `https://aesti.de/datenschutz`
 - Kontoloeschung: `https://aesti.de/konto-loeschen`

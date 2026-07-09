@@ -1,6 +1,6 @@
 # Homely Google Play Release Pack
 
-Stand: 2026-07-04
+Stand: 2026-07-10
 
 Dieses Dokument ist die operative Store-Checkliste fuer Homely: Haushalts Manager. Es sammelt die Angaben, Assets und Tests, die vor dem ersten internen Google-Play-Test und vor Production gebraucht werden.
 
@@ -57,7 +57,7 @@ Aktueller Stand:
 
 - Edge Function `delete-account` ist deployed.
 - In-App-Loeschung wurde bereits erfolgreich getestet.
-- GitHub-Pages-Seite muss vor Store-Einreichung live sein.
+- GitHub-Pages-Seite ist live: `https://aesti.de/konto-loeschen`.
 
 ## 4. Store Listing Text
 
@@ -125,6 +125,15 @@ Vor Production:
 - Darkmode und alle Designsets pruefen.
 
 ## 7. Release-Kommandos
+
+Aktueller Production-AAB fuer den internen Play-Test:
+
+- App-Version: `1.0.0`
+- Android `versionCode`: `4`
+- EAS Build ID: `5923f656-90e0-4c11-8e71-670074981e13`
+- AAB: https://expo.dev/artifacts/eas/CiEYZeiE3LVycOqnL_lRBzDxrLkBSiundJAQeVXfBTE.aab
+- Lokale Kopie: `artifacts/homely-1.0.0-versionCode4.aab`
+- SHA-256: `7F742D74F2ADD21E50AC401C6008592F31505230FC9291FF902FB399CC07F89B`
 
 Preflight:
 
