@@ -103,3 +103,7 @@ Live-URLs:
 Das vorbereitete Eintragungspaket liegt hier:
 
 `docs/16-google-play-console-fields-homely.md`
+
+Das konkrete Upload-Runbook fuer den internen Test liegt hier:
+
+`docs/20-play-console-internal-test-upload.md`
