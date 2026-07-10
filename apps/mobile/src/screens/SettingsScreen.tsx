@@ -30,6 +30,7 @@ import { Assignment, MealPlanEntry, Member, TaskTemplate } from "../utils/planne
 import { FamilyScreen } from "./FamilyScreen";
 
 type SettingsTab = "account" | "household" | "appearance" | "readiness";
+type AccountArea = "identity" | "households" | "sync" | "invites" | "danger";
 type SyncStatus = {
   state: "local" | "syncing" | "synced" | "error";
   message: string;
@@ -61,6 +62,7 @@ const syncTestItems = [
   { id: "meals", title: "Essensplan", detail: "Gericht, Koch-Person und Tausch werden remote gespiegelt." },
   { id: "members", title: "Mitglieder verwalten", detail: "Anlegen, bearbeiten, Rollen und loeschen schreiben remote." },
   { id: "invitation", title: "Einladung", detail: "Zweiter Account kann per Code beitreten." },
+  { id: "multi-household", title: "Haushaltswechsel", detail: "Accounts mit mehreren Haushalten sehen den Wechselbereich und laden den richtigen Plan." },
   { id: "permissions", title: "Rollenrechte", detail: "Mitglieder duerfen erledigen, Verwalter duerfen planen." },
   { id: "restart", title: "Neustart", detail: "Nach Expo/App-Neustart bleibt der Sync-Stand konsistent." },
 ];
@@ -277,7 +279,7 @@ function AccountSettings({
   const [busy, setBusy] = useState(false);
   const [remoteHouseholds, setRemoteHouseholds] = useState<RemoteHousehold[]>([]);
   const [remoteMemberships, setRemoteMemberships] = useState<RemoteMembership[]>([]);
-  const [accountArea, setAccountArea] = useState<"identity" | "sync" | "invites" | "danger">("identity");
+  const [accountArea, setAccountArea] = useState<AccountArea>("identity");
   const [currentAuthEmail, setCurrentAuthEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
   const [inviteShortCode, setInviteShortCode] = useState("");
@@ -303,6 +305,48 @@ function AccountSettings({
       })
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    let mounted = true;
+    if (!currentAuthEmail) {
+      setRemoteHouseholds([]);
+      setRemoteMemberships([]);
+      return () => {
+        mounted = false;
+      };
+    }
+
+    listRemoteHouseholds()
+      .then(async (result) => {
+        if (!mounted || !result.ok) return;
+        const households = result.data ?? [];
+        setRemoteHouseholds(households);
+        const storedIsAvailable = households.some((household) => household.id === activeRemoteHouseholdId);
+        const nextHouseholdId = storedIsAvailable ? activeRemoteHouseholdId : households[0]?.id || "";
+        if (!nextHouseholdId) {
+          setRemoteMemberships([]);
+          return;
+        }
+        if (!storedIsAvailable) {
+          setActiveRemoteHouseholdId(nextHouseholdId);
+        }
+        const membershipResult = await listRemoteMemberships(nextHouseholdId);
+        if (mounted && membershipResult.ok) {
+          setRemoteMemberships(membershipResult.data ?? []);
+        }
+      })
+      .catch(() => {});
+
+    return () => {
+      mounted = false;
+    };
+  }, [currentAuthEmail, activeRemoteHouseholdId]);
+
+  useEffect(() => {
+    if (accountArea === "households" && remoteHouseholds.length < 2) {
+      setAccountArea("sync");
+    }
+  }, [accountArea, remoteHouseholds.length]);
 
   async function runAuthAction(action: () => Promise<{ ok: boolean; message: string }>) {
     setBusy(true);
@@ -412,6 +456,7 @@ function AccountSettings({
       if (membership) {
         setActiveRemoteHouseholdId(membership.household_id);
         setRemoteMemberships((items) => [...items.filter((item) => item.id !== membership.id), membership]);
+        loadHouseholds();
       }
     });
   }
@@ -432,6 +477,17 @@ function AccountSettings({
   function loadPlanner() {
     runSyncAction(() => downloadPlannerSnapshot(activeRemoteHouseholdId), (snapshot) => {
       if (snapshot) {
+        applyRemoteSnapshot(snapshot);
+        setView("today");
+      }
+    });
+  }
+
+  function switchHousehold(householdId: string) {
+    runSyncAction(() => downloadPlannerSnapshot(householdId), (snapshot) => {
+      if (snapshot) {
+        setActiveRemoteHouseholdId(householdId);
+        loadMemberships(householdId);
         applyRemoteSnapshot(snapshot);
         setView("today");
       }
@@ -511,6 +567,15 @@ function AccountSettings({
     );
   }
 
+  const activeRemoteHousehold = remoteHouseholds.find((household) => household.id === activeRemoteHouseholdId);
+  const accountAreaTabs: Array<{ id: AccountArea; label: string }> = [
+    { id: "identity", label: "Identitaet" },
+    ...(remoteHouseholds.length >= 2 ? [{ id: "households" as AccountArea, label: "Haushalte" }] : []),
+    { id: "sync", label: "Cloud" },
+    { id: "invites", label: "Einladen" },
+    { id: "danger", label: "Daten" },
+  ];
+
   return (
     <View style={[styles.section, darkMode && styles.sectionDark, themed.section]}>
       <Text style={[styles.eyebrow, themed.muted]}>Konto</Text>
@@ -519,12 +584,7 @@ function AccountSettings({
         E-Mail sichert Anmeldung, Passwort-Wiederherstellung und Einladungen. Cloud-Sync bleibt optional.
       </Text>
       <View style={styles.segmentedWrap}>
-        {[
-          { id: "identity", label: "Identitaet" },
-          { id: "sync", label: "Cloud" },
-          { id: "invites", label: "Einladen" },
-          { id: "danger", label: "Daten" },
-        ].map((item) => {
+        {accountAreaTabs.map((item) => {
           const active = accountArea === item.id;
           return (
             <TouchableOpacity
@@ -533,7 +593,7 @@ function AccountSettings({
               accessibilityRole="button"
               accessibilityLabel={`Kontobereich ${item.label} anzeigen`}
               accessibilityState={{ selected: active }}
-              onPress={() => setAccountArea(item.id as "identity" | "sync" | "invites" | "danger")}
+              onPress={() => setAccountArea(item.id)}
             >
               <Text style={[styles.segmentButtonText, themed.muted, active && styles.segmentButtonTextActive]}>{item.label}</Text>
             </TouchableOpacity>
@@ -660,6 +720,48 @@ function AccountSettings({
           </View>
           {!!message && <Text style={[styles.permissionHint, styles.spacedTitle, darkMode && styles.mutedDark]}>{message}</Text>}
         </>
+      )}
+
+      {accountArea === "households" && (
+        <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
+          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Haushalte wechseln</Text>
+          <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
+            Dein Konto ist in {remoteHouseholds.length} Haushalten aktiv. Waehle den Haushalt, mit dem du jetzt arbeiten moechtest.
+          </Text>
+          {!!activeRemoteHousehold && (
+            <View style={[styles.compactInfoBox, darkMode && styles.rowDark, themed.soft]}>
+              <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Aktuell geladen</Text>
+              <Text style={[styles.taskTitle, themed.text, darkMode && styles.textDark]}>{activeRemoteHousehold.name}</Text>
+            </View>
+          )}
+          <TouchableOpacity style={[styles.secondaryActionFull, themed.soft, busy && styles.disabledButton]} disabled={busy} onPress={loadHouseholds}>
+            <Text style={[styles.secondaryActionText, themed.muted]}>Haushalte aktualisieren</Text>
+          </TouchableOpacity>
+          {remoteHouseholds.map((household) => {
+            const active = activeRemoteHouseholdId === household.id;
+            return (
+              <View key={household.id} style={[styles.remoteRow, darkMode && styles.rowDark, themed.card, active && themed.borderActive]}>
+                <View style={styles.taskTextBox}>
+                  <Text style={[styles.taskTitle, themed.text, darkMode && styles.textDark]}>{household.name}</Text>
+                  <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+                    {active ? "Aktiver Haushalt" : "Kann geladen und aktiviert werden"}
+                  </Text>
+                </View>
+                <TouchableOpacity
+                  style={[styles.secondaryAction, themed.soft, (active || busy) && styles.disabledButton]}
+                  disabled={active || busy}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Zu Haushalt ${household.name} wechseln`}
+                  accessibilityState={{ disabled: active || busy }}
+                  onPress={() => switchHousehold(household.id)}
+                >
+                  <Text style={[styles.secondaryActionText, themed.muted]}>{active ? "Aktiv" : "Wechseln"}</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+          {!!syncMessage && <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>{syncMessage}</Text>}
+        </View>
       )}
 
       {accountArea === "invites" && (
