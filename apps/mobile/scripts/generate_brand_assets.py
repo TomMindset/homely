@@ -4,12 +4,15 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = ROOT.parents[1]
 ASSET_DIR = ROOT / "assets"
+STORE_ASSET_DIR = PROJECT_ROOT / "store-assets"
 
 BRAND = {
     "primary": "#256F63",
     "primary_dark": "#15483F",
     "cream": "#F7F2E8",
+    "soft": "#E5F1ED",
     "paper": "#FFFDF8",
     "line": "#D8CCBC",
     "accent": "#F4A62A",
@@ -105,9 +108,38 @@ def save_splash(path: Path, width: int = 1242, height: int = 2436) -> None:
     img.save(path)
 
 
+def save_feature_graphic(path: Path, width: int = 1024, height: int = 500) -> None:
+    img = Image.new("RGB", (width, height), BRAND["cream"])
+    draw = ImageDraw.Draw(img)
+
+    draw.rounded_rectangle((38, 38, width - 38, height - 38), radius=28, fill=BRAND["paper"], outline=BRAND["line"], width=2)
+    draw.rounded_rectangle((72, 86, 244, 258), radius=34, fill=BRAND["primary"])
+    draw.rounded_rectangle((98, 112, 218, 232), radius=26, fill=BRAND["primary_dark"])
+    draw_mark(draw, (116, 126, 200, 214), scale=0.72)
+
+    draw.text((292, 92), "Homely", font=font(78, bold=True), fill=BRAND["ink"])
+    draw.text((296, 178), "Haushalts Manager", font=font(30, bold=True), fill=BRAND["primary"])
+    draw.text((296, 232), "Aufgaben, Essen und Fairness", font=font(38, bold=True), fill=BRAND["ink"])
+    draw.text((298, 286), "fuer Familie, WG und Haushalt", font=font(28), fill=BRAND["muted"])
+
+    chips = [("Heute", 72, 334), ("Woche", 190, 334), ("Fairness", 324, 334), ("Essen", 500, 334)]
+    for label, x, y in chips:
+        bbox = draw.textbbox((0, 0), label, font=font(24, bold=True))
+        chip_width = bbox[2] - bbox[0] + 46
+        draw.rounded_rectangle((x, y, x + chip_width, y + 54), radius=18, fill=BRAND["soft"], outline=BRAND["line"], width=1)
+        draw.text((x + 23, y + 12), label, font=font(24, bold=True), fill=BRAND["primary_dark"])
+
+    draw.line((72, 412, width - 72, 412), fill=BRAND["line"], width=2)
+    draw.text((72, 430), "Ruhig planen. Fair verteilen. Gemeinsam erledigen.", font=font(22), fill=BRAND["muted"])
+    img.save(path)
+
+
 def main() -> None:
     ASSET_DIR.mkdir(parents=True, exist_ok=True)
+    STORE_ASSET_DIR.mkdir(parents=True, exist_ok=True)
     save_icon(ASSET_DIR / "icon.png")
+    save_icon(STORE_ASSET_DIR / "homely-app-icon-512.png", size=512)
+    save_feature_graphic(STORE_ASSET_DIR / "homely-feature-graphic-1024x500.png")
     save_adaptive_icon(ASSET_DIR / "adaptive-icon.png")
     save_splash(ASSET_DIR / "splash.png")
 

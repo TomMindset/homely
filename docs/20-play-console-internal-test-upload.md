@@ -4,6 +4,8 @@ Stand: 2026-07-10
 
 Dieses Runbook beschreibt den naechsten manuellen Schritt in der Google Play Console: **Homely 1.0.0 als internen Test hochladen**.
 
+Die kopierbaren Play-Console-Felder liegen gebuendelt in `docs/21-play-console-submission-packet.md`.
+
 ## Artefakt
 
 - Datei: `artifacts/homely-1.0.0-versionCode4.aab`

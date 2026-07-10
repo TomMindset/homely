@@ -125,10 +125,11 @@ Voraussichtliche Antworten:
 
 Vor Einreichung muss der Content-Rating-Fragebogen direkt in der Play Console final ausgefuellt werden.
 
-## Store-Assets Offen
+## Store-Assets
 
 - Smartphone-Screenshots
-- Feature Graphic 1024 x 500 px
+- Feature Graphic: `store-assets/homely-feature-graphic-1024x500.png`
 - Optional: 7-Zoll/10-Zoll Tablet-Screenshots, falls Tablet-Support beworben wird
 - App-Icon ist vorhanden: `apps/mobile/assets/icon.png`
+- Play-Store-App-Icon 512 x 512: `store-assets/homely-app-icon-512.png`
 - Adaptive Icon ist vorhanden: `apps/mobile/assets/adaptive-icon.png`
