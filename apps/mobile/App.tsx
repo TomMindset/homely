@@ -12,6 +12,7 @@ import { TasksScreen } from "./src/screens/TasksScreen";
 import { TodayScreen } from "./src/screens/TodayScreen";
 import { WeekScreen } from "./src/screens/WeekScreen";
 import { handleAuthRedirectUrl } from "./src/services/authService";
+import { configureNotificationHandler } from "./src/services/pushNotificationService";
 import { usePlannerState } from "./src/state/usePlannerState";
 import { styles } from "./src/styles/plannerStyles";
 import { getDesignSet } from "./src/constants/planner";
@@ -23,6 +24,10 @@ export default function App() {
   const activePalette = planner.darkMode ? activeDesign.dark : activeDesign;
   const themedSurface = { backgroundColor: activePalette.background };
   const setView = planner.setView;
+
+  useEffect(() => {
+    configureNotificationHandler();
+  }, []);
 
   useEffect(() => {
     let active = true;

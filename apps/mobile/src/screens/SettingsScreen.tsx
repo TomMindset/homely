@@ -23,6 +23,12 @@ import {
   updatePassword,
 } from "../services/authService";
 import { downloadPlannerSnapshot, uploadPlannerSnapshot, type PlannerSnapshot } from "../services/plannerSyncService";
+import {
+  disablePushNotifications,
+  getPushNotificationStatus,
+  registerForPushNotifications,
+  type PushNotificationStatus,
+} from "../services/pushNotificationService";
 import { getSupabaseStatusLabel } from "../services/supabaseConfig";
 import { styles } from "../styles/plannerStyles";
 import { useThemeStyles } from "../theme/useThemeStyles";
@@ -30,7 +36,7 @@ import { Assignment, MealPlanEntry, Member, TaskTemplate } from "../utils/planne
 import { FamilyScreen } from "./FamilyScreen";
 
 type SettingsTab = "account" | "household" | "appearance" | "readiness";
-type AccountArea = "identity" | "households" | "sync" | "invites" | "danger";
+type AccountArea = "identity" | "households" | "sync" | "invites" | "notifications" | "danger";
 type SyncStatus = {
   state: "local" | "syncing" | "synced" | "error";
   message: string;
@@ -280,6 +286,8 @@ function AccountSettings({
   const [remoteHouseholds, setRemoteHouseholds] = useState<RemoteHousehold[]>([]);
   const [remoteMemberships, setRemoteMemberships] = useState<RemoteMembership[]>([]);
   const [accountArea, setAccountArea] = useState<AccountArea>("identity");
+  const [pushStatus, setPushStatus] = useState<PushNotificationStatus | null>(null);
+  const [pushMessage, setPushMessage] = useState("");
   const [currentAuthEmail, setCurrentAuthEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
   const [inviteShortCode, setInviteShortCode] = useState("");
@@ -483,6 +491,45 @@ function AccountSettings({
     });
   }
 
+  async function loadPushStatus() {
+    setBusy(true);
+    try {
+      const result = await getPushNotificationStatus();
+      setPushMessage(result.message);
+      if (result.data) setPushStatus(result.data);
+    } catch {
+      setPushMessage("Push-Status konnte nicht geladen werden.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function enablePush() {
+    setBusy(true);
+    try {
+      const result = await registerForPushNotifications();
+      setPushMessage(result.message);
+      if (result.data) setPushStatus(result.data);
+    } catch {
+      setPushMessage("Push-Benachrichtigungen konnten nicht aktiviert werden.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function disablePush() {
+    setBusy(true);
+    try {
+      const result = await disablePushNotifications();
+      setPushMessage(result.message);
+      if (result.data) setPushStatus(result.data);
+    } catch {
+      setPushMessage("Push-Benachrichtigungen konnten nicht deaktiviert werden.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function switchHousehold(householdId: string) {
     runSyncAction(() => downloadPlannerSnapshot(householdId), (snapshot) => {
       if (snapshot) {
@@ -573,6 +620,7 @@ function AccountSettings({
     ...(remoteHouseholds.length >= 2 ? [{ id: "households" as AccountArea, label: "Haushalte" }] : []),
     { id: "sync", label: "Cloud" },
     { id: "invites", label: "Einladen" },
+    { id: "notifications", label: "Push" },
     { id: "danger", label: "Daten" },
   ];
 
@@ -777,6 +825,60 @@ function AccountSettings({
         )}
       </View>
         </>
+      )}
+
+      {accountArea === "notifications" && (
+        <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
+          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Push-Benachrichtigungen</Text>
+          <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
+            Aktiviere Erinnerungen erst nach Konto-Login. Homely speichert dann einen Geraete-Token fuer dein Konto, damit Aufgaben spaeter
+            serverseitig erinnert werden koennen.
+          </Text>
+          <View style={[styles.compactInfoBox, darkMode && styles.rowDark, themed.soft]}>
+            <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+              Berechtigung: {pushStatus?.permissionStatus ?? "unbekannt"}
+            </Text>
+            <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+              Registrierte Geraete: {pushStatus?.activeDeviceCount ?? 0}
+            </Text>
+            <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+              Aufgabenerinnerungen: {pushStatus?.taskRemindersEnabled ? "aktiv" : "aus"}
+            </Text>
+          </View>
+          <View style={styles.editorActions}>
+            <TouchableOpacity
+              style={[styles.primaryActionInline, themed.primary, (!isSignedIn || busy) && styles.disabledButton]}
+              disabled={!isSignedIn || busy}
+              accessibilityRole="button"
+              accessibilityLabel="Push-Benachrichtigungen aktivieren"
+              accessibilityState={{ disabled: !isSignedIn || busy }}
+              onPress={enablePush}
+            >
+              <Text style={styles.primaryActionText}>Aktivieren</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.secondaryAction, themed.soft, (!isSignedIn || busy) && styles.disabledButton]}
+              disabled={!isSignedIn || busy}
+              accessibilityRole="button"
+              accessibilityLabel="Push-Status aktualisieren"
+              accessibilityState={{ disabled: !isSignedIn || busy }}
+              onPress={loadPushStatus}
+            >
+              <Text style={[styles.secondaryActionText, themed.muted]}>Status</Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity
+            style={[styles.deleteButtonWide, (!isSignedIn || busy) && styles.disabledButton]}
+            disabled={!isSignedIn || busy}
+            accessibilityRole="button"
+            accessibilityLabel="Push-Benachrichtigungen deaktivieren"
+            accessibilityState={{ disabled: !isSignedIn || busy }}
+            onPress={disablePush}
+          >
+            <Text style={styles.deleteButtonText}>Push deaktivieren</Text>
+          </TouchableOpacity>
+          {!!pushMessage && <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>{pushMessage}</Text>}
+        </View>
       )}
 
       {accountArea === "sync" && (

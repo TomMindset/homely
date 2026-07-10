@@ -12,7 +12,7 @@ Quelle: Google Play Console Help, "Prepare your app for review"
 - Ads: Fuer v1 "Nein", solange keine Ads, Cross-Promotion oder Ad-SDKs eingebaut werden.
 - Sign-in details: Reviewer-Zugang angeben, weil Konto/Sync per Login erreichbar ist.
 - Target audience: Haushaltsorganisation fuer Erwachsene/Familien/WGs. Kinder koennen Haushaltsmitglieder sein, aber nicht primaere Zielgruppe.
-- Permissions declaration: v1 sollte keine SMS, Call Log, Location, Camera, Contacts oder aehnlich sensible Berechtigungen nutzen.
+- Permissions declaration: v1 nutzt Benachrichtigungen (`POST_NOTIFICATIONS`) nur nach Opt-in; keine SMS, Call Log, Location, Camera, Contacts oder aehnlich sensible Berechtigungen.
 - Content rating: Fragebogen ausfuellen; erwartbar niedrige Altersfreigabe, da keine Gewalt, Dating, Gluecksspiel oder UGC-Feed.
 - Data Safety: Muss auch fuer Test-/Production-Tracks vollstaendig und korrekt ausgefuellt werden.
 
@@ -25,6 +25,7 @@ Homely v1 sammelt/ verarbeitet nach aktueller Architektur:
 - Personenbezogene Daten: E-Mail-Adresse fuer Login und Konto.
 - Nutzerinhalte: Haushaltsname, Mitglieder-/Anzeigenamen, Rollen, Aufgaben, Punkte, Essensplan, Erledigungen, Einladungen.
 - App-Aktivitaet: Aufgabenstatus und Sync-Aktionen als fachliche Nutzungsdaten.
+- App-Informationen/IDs: Expo Push Token und technische Geraeteangaben nur fuer Benachrichtigungen nach Opt-in.
 - Keine Standortdaten.
 - Keine Kontakte.
 - Keine Kamera/Mikrofon/SMS/Call-Log.
@@ -33,6 +34,7 @@ Homely v1 sammelt/ verarbeitet nach aktueller Architektur:
 - Keine Analytics in v1.
 - Keine In-App-Kaeufe in v1.
 - Datenuebertragung: Supabase/Backend verarbeitet Daten zur Bereitstellung von Auth, Sync, Einladungen und Kontoloeschung.
+- Benachrichtigungen: Expo Push Service verarbeitet Push-Token und Benachrichtigungsversand, sobald der Nutzer Push aktiviert.
 - Verschluesselung: HTTPS/TLS fuer Netzwerkuebertragung, Supabase Auth/DB serverseitig.
 - Nutzer koennen Datenloeschung anfordern und Konto in der App loeschen.
 
@@ -117,6 +119,8 @@ Vor Production:
 - Zweites Konto einladen und beitreten.
 - Rollen testen: Gruender, Verwalter, Mitglied.
 - Automatischen Mehrkonto-Live-Check aus `docs/12-sync-testplan.md` ausfuehren.
+- Push unter `Mehr > Konto > Push` aktivieren, Android-Berechtigung pruefen und Token in Supabase kontrollieren.
+- Push wieder deaktivieren und pruefen, dass keine aktiven Tokens fuer das Konto verbleiben.
 - Mitglied darf Aufgaben erledigen und fremde Aufgaben uebernehmen, aber nicht verwalten.
 - Verwalter darf Aufgaben, Essensplan und Zuordnungen verwalten.
 - Normales Mitglied darf keine Aufgaben/Personen/Zuordnungen verwalten.
@@ -161,3 +165,4 @@ $env:EAS_BUILD_NO_EXPO_GO_WARNING='1'
 - Google Play Console Help: Account deletion requirements: https://support.google.com/googleplay/android-developer/answer/13327111
 - Google Play Console Help: Preview assets: https://support.google.com/googleplay/android-developer/answer/9866151
 - Android Developers: Target API level requirement: https://developer.android.com/google/play/requirements/target-sdk
+- Expo Docs: Push notifications overview: https://docs.expo.dev/push-notifications/overview/

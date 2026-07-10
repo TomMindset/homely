@@ -8,6 +8,8 @@ const requiredTables = [
   "assignments",
   "meals",
   "household_invitations",
+  "push_tokens",
+  "notification_preferences",
 ];
 
 const requiredRpcs = ["delete_household_with_data"];

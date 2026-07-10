@@ -16,10 +16,15 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+    "plugins": [
+      "expo-notifications"
+    ],
     "android": {
       "package": "com.homely.haushaltsmanager",
       "versionCode": 4,
-      "permissions": [],
+      "permissions": [
+        "POST_NOTIFICATIONS"
+      ],
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#256F63"

@@ -237,6 +237,7 @@ check("required Supabase migrations exist", () => {
     "0006_delete_household_with_data.sql",
     "0007_account_deletion_support.sql",
     "0008_repair_invitation_and_deletion_rpcs.sql",
+    "0009_push_notifications.sql",
   ].forEach((file) => {
     assert(exists(`supabase/migrations/${file}`), `Missing migration ${file}`);
   });
@@ -255,7 +256,10 @@ check("Android production build config is Play-ready", () => {
   assert(appConfig.scheme === "homely", "Deep-link scheme should be homely");
   assert(appConfig.android?.package === "com.homely.haushaltsmanager", "Android package should be stable for Google Play");
   assert(Number.isInteger(appConfig.android?.versionCode) && appConfig.android.versionCode >= 1, "Android versionCode must be a positive integer");
-  assert(Array.isArray(appConfig.android?.permissions) && appConfig.android.permissions.length === 0, "Android permissions should stay intentionally empty");
+  assert(appConfig.plugins?.includes("expo-notifications"), "Expo notifications plugin should be configured");
+  assert(appConfig.android?.permissions?.includes("POST_NOTIFICATIONS"), "Android should request notification permission explicitly");
+  assert(packageJson.dependencies?.["expo-notifications"], "expo-notifications dependency should be installed");
+  assert(packageJson.dependencies?.["expo-device"], "expo-device dependency should be installed");
   assert(easConfig.build?.production?.android?.buildType === "app-bundle", "Production build must create an Android App Bundle");
   assert(easConfig.cli?.appVersionSource === "local", "EAS app version source should stay local while app.json is source of truth");
   assert(easConfig.build?.production?.autoIncrement === true, "Production builds should auto-increment Android versionCode");
@@ -324,6 +328,21 @@ check("account deletion uses server-side Edge Function and prep RPC", () => {
   assert(authService.includes("/functions/v1/delete-account"), "Mobile app should call delete-account Edge Function");
   assert(authService.includes('"x-homely-user-token": accessToken'), "Mobile app should pass user access token to deletion function");
   assert(edgeFunction.includes("x-homely-user-token"), "Edge Function should accept explicit user access token");
+});
+
+check("push notification foundation is opt-in and RLS protected", () => {
+  const migration = read("supabase/migrations/0009_push_notifications.sql");
+  const service = read("apps/mobile/src/services/pushNotificationService.ts");
+  const settings = read("apps/mobile/src/screens/SettingsScreen.tsx");
+  const databaseHealth = read("apps/mobile/src/services/databaseHealthService.ts");
+  assert(migration.includes("create table if not exists public.push_tokens"), "Missing push token table");
+  assert(migration.includes("create table if not exists public.notification_preferences"), "Missing notification preferences table");
+  assert(migration.includes("enable row level security"), "Push tables must enable RLS");
+  assert(migration.includes("user_id = auth.uid()"), "Push policies must be scoped to the signed-in user");
+  assert(service.includes("requestPermissionsAsync"), "Push service must ask for notification permission");
+  assert(service.includes("getExpoPushTokenAsync"), "Push service must register Expo push token");
+  assert(settings.includes("Push-Benachrichtigungen") && settings.includes("Push deaktivieren"), "Settings should expose opt-in and opt-out controls");
+  assert(databaseHealth.includes("push_tokens") && databaseHealth.includes("notification_preferences"), "Database health check should include push tables");
 });
 
 check("member payload normalizes role, short code and soft-delete reset", () => {
