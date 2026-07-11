@@ -1,12 +1,14 @@
 # Homely Push Reminder Dispatch
 
-Stand: 2026-07-11
+Stand: 2026-07-12
 
 Ziel: Homely erinnert serverseitig an faellige Aufgaben. Die App registriert Push-Tokens, Supabase claimt faellige Aufgaben, eine Edge Function sendet ueber Expo Push und `notification_log` verhindert doppelte Erinnerungen.
 
 ## Bestandteile
 
-- Migration: `supabase/migrations/0010_task_reminder_dispatch.sql`
+- Migrationen:
+  - `supabase/migrations/0010_task_reminder_dispatch.sql`
+  - `supabase/migrations/0011_notification_preference_controls.sql`
 - Edge Function: `supabase/functions/send-task-reminders/index.ts`
 - Tabellen:
   - `push_tokens`
@@ -14,14 +16,22 @@ Ziel: Homely erinnert serverseitig an faellige Aufgaben. Die App registriert Pus
   - `notification_log`
 - RPC:
   - `claim_due_task_reminders(target_window_start, target_window_end, target_max_items)`
+- App-Steuerung:
+  - Testbenachrichtigung
+  - Aufgaben-Erinnerungen
+  - Aenderungshinweise
+  - ueberfaellige Aufgaben
+  - Haushaltsstatus
+  - Ruhezeiten
 
 ## Supabase ausfuehren
 
 1. Migration `0010_task_reminder_dispatch.sql` im SQL Editor ausfuehren.
-2. Edge Function deployen.
-3. Secret fuer Cron-Aufruf setzen.
-4. Cron Job anlegen.
-5. Auf Samsung Push aktivieren und Aufgabe mit Erinnerung in das naechste Zeitfenster legen.
+2. Migration `0011_notification_preference_controls.sql` im SQL Editor ausfuehren.
+3. Edge Function deployen.
+4. Secret fuer Cron-Aufruf setzen.
+5. Cron Job anlegen.
+6. Auf Samsung Push aktivieren und Aufgabe mit Erinnerung in das naechste Zeitfenster legen.
 
 ## PowerShell Deploy
 
@@ -66,7 +76,10 @@ select cron.schedule(
 ## Test
 
 - In der App unter `Mehr > Konto > Push` Push aktivieren.
+- `Test senden` pruefen.
+- Ruhezeiten speichern und nach `Status` erneut kontrollieren.
 - Eine Aufgabe mit Erinnerung `Am Tag` und Uhrzeit im naechsten 15-Minuten-Fenster anlegen.
+- Eine zweite Aufgabe innerhalb der Ruhezeit anlegen und pruefen, dass der Claim auf das Ende der Ruhezeit verschoben wird.
 - `Plan hochladen`, falls der Haushalt synchronisiert ist.
 - Cron abwarten oder Function manuell invoke.
 - `notification_log` pruefen:

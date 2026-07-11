@@ -27,6 +27,9 @@ import {
   disablePushNotifications,
   getPushNotificationStatus,
   registerForPushNotifications,
+  sendTestPushNotification,
+  updatePushPreferences,
+  type PushPreferencePatch,
   type PushNotificationStatus,
 } from "../services/pushNotificationService";
 import { getSupabaseStatusLabel } from "../services/supabaseConfig";
@@ -91,6 +94,43 @@ function testStatusLabel(status: TestStatus) {
   if (status === "ok") return "OK";
   if (status === "issue") return "Problem";
   return "Offen";
+}
+
+function PushPreferenceToggle({
+  title,
+  detail,
+  value,
+  disabled,
+  darkMode,
+  onPress,
+}: {
+  title: string;
+  detail: string;
+  value: boolean;
+  disabled: boolean;
+  darkMode: boolean;
+  onPress: () => void;
+}) {
+  const themed = useThemeStyles(darkMode);
+
+  return (
+    <View style={[styles.preferenceRow, darkMode && styles.rowDark, themed.card]}>
+      <View style={styles.preferenceText}>
+        <Text style={[styles.taskTitle, themed.text, darkMode && styles.textDark]}>{title}</Text>
+        <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>{detail}</Text>
+      </View>
+      <TouchableOpacity
+        style={[styles.toggleButton, value && styles.toggleButtonActive, disabled && styles.disabledButton]}
+        disabled={disabled}
+        accessibilityRole="switch"
+        accessibilityLabel={title}
+        accessibilityState={{ checked: value, disabled }}
+        onPress={onPress}
+      >
+        <Text style={[styles.toggleButtonText, value && styles.toggleButtonTextActive]}>{value ? "Ein" : "Aus"}</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
 export function SettingsScreen({
@@ -288,6 +328,8 @@ function AccountSettings({
   const [accountArea, setAccountArea] = useState<AccountArea>("identity");
   const [pushStatus, setPushStatus] = useState<PushNotificationStatus | null>(null);
   const [pushMessage, setPushMessage] = useState("");
+  const [quietStartDraft, setQuietStartDraft] = useState("21:00");
+  const [quietEndDraft, setQuietEndDraft] = useState("07:00");
   const [currentAuthEmail, setCurrentAuthEmail] = useState("");
   const [inviteName, setInviteName] = useState("");
   const [inviteShortCode, setInviteShortCode] = useState("");
@@ -355,6 +397,12 @@ function AccountSettings({
       setAccountArea("sync");
     }
   }, [accountArea, remoteHouseholds.length]);
+
+  useEffect(() => {
+    if (!pushStatus) return;
+    setQuietStartDraft(pushStatus.quietHoursStart);
+    setQuietEndDraft(pushStatus.quietHoursEnd);
+  }, [pushStatus?.quietHoursStart, pushStatus?.quietHoursEnd]);
 
   async function runAuthAction(action: () => Promise<{ ok: boolean; message: string }>) {
     setBusy(true);
@@ -530,6 +578,31 @@ function AccountSettings({
     }
   }
 
+  async function savePushPreference(patch: PushPreferencePatch) {
+    setBusy(true);
+    try {
+      const result = await updatePushPreferences(patch);
+      setPushMessage(result.message);
+      if (result.data) setPushStatus(result.data);
+    } catch {
+      setPushMessage("Push-Einstellungen konnten nicht gespeichert werden.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendPushTest() {
+    setBusy(true);
+    try {
+      const result = await sendTestPushNotification();
+      setPushMessage(result.message);
+    } catch {
+      setPushMessage("Testbenachrichtigung konnte nicht gesendet werden.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   function switchHousehold(householdId: string) {
     runSyncAction(() => downloadPlannerSnapshot(householdId), (snapshot) => {
       if (snapshot) {
@@ -623,6 +696,9 @@ function AccountSettings({
     { id: "notifications", label: "Push" },
     { id: "danger", label: "Daten" },
   ];
+  const pushControlsDisabled = !isSignedIn || busy || !pushStatus;
+  const quietHoursChanged =
+    !!pushStatus && (quietStartDraft !== pushStatus.quietHoursStart || quietEndDraft !== pushStatus.quietHoursEnd);
 
   return (
     <View style={[styles.section, darkMode && styles.sectionDark, themed.section]}>
@@ -831,8 +907,7 @@ function AccountSettings({
         <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
           <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Push-Benachrichtigungen</Text>
           <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
-            Aktiviere Erinnerungen erst nach Konto-Login. Homely speichert dann einen Geraete-Token fuer dein Konto, damit Aufgaben spaeter
-            serverseitig erinnert werden koennen.
+            Aktiviere Push pro Konto und Geraet. Homely erinnert nur nach deiner Zustimmung und respektiert deine Ruhezeiten.
           </Text>
           <View style={[styles.compactInfoBox, darkMode && styles.rowDark, themed.soft]}>
             <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
@@ -843,6 +918,9 @@ function AccountSettings({
             </Text>
             <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
               Aufgabenerinnerungen: {pushStatus?.taskRemindersEnabled ? "aktiv" : "aus"}
+            </Text>
+            <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+              Ruhezeit: {pushStatus ? `${pushStatus.quietHoursStart} bis ${pushStatus.quietHoursEnd}` : "noch nicht geladen"}
             </Text>
           </View>
           <View style={styles.editorActions}>
@@ -865,6 +943,92 @@ function AccountSettings({
               onPress={loadPushStatus}
             >
               <Text style={[styles.secondaryActionText, themed.muted]}>Status</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.secondaryAction, themed.soft, (!isSignedIn || busy) && styles.disabledButton]}
+              disabled={!isSignedIn || busy}
+              accessibilityRole="button"
+              accessibilityLabel="Testbenachrichtigung senden"
+              accessibilityState={{ disabled: !isSignedIn || busy }}
+              onPress={sendPushTest}
+            >
+              <Text style={[styles.secondaryActionText, themed.muted]}>Test senden</Text>
+            </TouchableOpacity>
+          </View>
+          <PushPreferenceToggle
+            title="Eigene Aufgaben erinnern"
+            detail="Faellige Aufgaben werden nur an die zugeordnete Person gesendet."
+            value={!!pushStatus?.taskRemindersEnabled}
+            disabled={pushControlsDisabled}
+            darkMode={darkMode}
+            onPress={() => savePushPreference({ taskRemindersEnabled: !pushStatus?.taskRemindersEnabled })}
+          />
+          <PushPreferenceToggle
+            title="Aenderungen im Haushalt"
+            detail="Bereitet Hinweise vor, wenn Zuordnungen oder Planungen dich betreffen."
+            value={!!pushStatus?.assignmentUpdatesEnabled}
+            disabled={pushControlsDisabled}
+            darkMode={darkMode}
+            onPress={() => savePushPreference({ assignmentUpdatesEnabled: !pushStatus?.assignmentUpdatesEnabled })}
+          />
+          <PushPreferenceToggle
+            title="Ueberfaellige Aufgaben"
+            detail="Laesst spaeter dezente Nachfragen zu, wenn offene Aufgaben liegen bleiben."
+            value={!!pushStatus?.overdueRemindersEnabled}
+            disabled={pushControlsDisabled}
+            darkMode={darkMode}
+            onPress={() => savePushPreference({ overdueRemindersEnabled: !pushStatus?.overdueRemindersEnabled })}
+          />
+          <PushPreferenceToggle
+            title="Haushaltsstatus"
+            detail="Optional fuer Verwalter: ein kurzer Tagesblick statt vieler Einzelmeldungen."
+            value={!!pushStatus?.householdSummaryEnabled}
+            disabled={pushControlsDisabled}
+            darkMode={darkMode}
+            onPress={() => savePushPreference({ householdSummaryEnabled: !pushStatus?.householdSummaryEnabled })}
+          />
+          <View style={[styles.preferenceRow, darkMode && styles.rowDark, themed.card]}>
+            <View style={styles.preferenceText}>
+              <Text style={[styles.taskTitle, themed.text, darkMode && styles.textDark]}>Ruhezeiten</Text>
+              <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+                Erinnerungen in diesem Zeitraum werden auf das Ende der Ruhezeit verschoben.
+              </Text>
+              <View style={styles.quietTimeRow}>
+                <View style={styles.quietTimeField}>
+                  <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Von</Text>
+                  <TextInput
+                    value={quietStartDraft}
+                    onChangeText={setQuietStartDraft}
+                    placeholder="21:00"
+                    placeholderTextColor={darkMode ? "#94a3b8" : "#9a9186"}
+                    style={[styles.input, darkMode && styles.inputDark, themed.input]}
+                  />
+                </View>
+                <View style={styles.quietTimeField}>
+                  <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Bis</Text>
+                  <TextInput
+                    value={quietEndDraft}
+                    onChangeText={setQuietEndDraft}
+                    placeholder="07:00"
+                    placeholderTextColor={darkMode ? "#94a3b8" : "#9a9186"}
+                    style={[styles.input, darkMode && styles.inputDark, themed.input]}
+                  />
+                </View>
+              </View>
+            </View>
+            <TouchableOpacity
+              style={[
+                styles.toggleButton,
+                quietHoursChanged && styles.toggleButtonActive,
+                (pushControlsDisabled || !quietHoursChanged) && styles.disabledButton,
+              ]}
+              disabled={pushControlsDisabled || !quietHoursChanged}
+              accessibilityRole="button"
+              accessibilityLabel="Ruhezeiten speichern"
+              accessibilityState={{ disabled: pushControlsDisabled || !quietHoursChanged }}
+              onPress={() => savePushPreference({ quietHoursStart: quietStartDraft, quietHoursEnd: quietEndDraft })}
+            >
+              <Text style={[styles.toggleButtonText, quietHoursChanged && styles.toggleButtonTextActive]}>Speichern</Text>
             </TouchableOpacity>
           </View>
           <TouchableOpacity

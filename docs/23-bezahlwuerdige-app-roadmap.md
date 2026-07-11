@@ -1,6 +1,6 @@
 # Homely Roadmap: Bezahlwuerdige App
 
-Stand: 2026-07-11
+Stand: 2026-07-12
 
 Ziel: Homely soll nicht nur Aufgaben verwalten, sondern Alltagsstress reduzieren. Die App wird dann bezahlwuerdig, wenn neue Nutzer schnell starten, regelmaessige Nutzer sofort ihre Aufgaben sehen und Verwalter faire Entscheidungen treffen koennen.
 
@@ -8,8 +8,10 @@ Ziel: Homely soll nicht nur Aufgaben verwalten, sondern Alltagsstress reduzieren
 
 - Push-Grundlage ist vorhanden: Opt-in, Expo Push Token, Supabase-Tabellen und RLS.
 - Serverseitiger Versand ist aktiv: `send-task-reminders`, `notification_log`, Claim-RPC, `HOMELY_REMINDER_SECRET` und Cron alle 5 Minuten.
+- Nutzersteuerung ist vorhanden: Testbenachrichtigung, Aufgaben-Erinnerungen, Aenderungshinweise, ueberfaellige Aufgaben, Haushaltsstatus und Ruhezeiten.
+- Ruhezeiten werden serverseitig beim Claim faelliger Aufgabenerinnerungen beruecksichtigt.
 - Naechster Schritt: Samsung-Endtest zusammen mit den naechsten Geraete- und Play-Tests.
-- Erinnerungsarten: Tagesstart, Aufgabe zur Uhrzeit, Vortag, ueberfaellig, Haushaltsstatus fuer Verwalter.
+- Erinnerungsarten: Aufgabe zur Uhrzeit ist aktiv, Vortag wird ueber `reminder_lead_days` abgebildet, ueberfaellig und Haushaltsstatus sind als Preference vorbereitet.
 - UX-Regel: wenige, relevante Hinweise statt Benachrichtigungsflut.
 - Testpflicht: Token registrieren, Testbenachrichtigung, Deaktivierung, keine doppelten Erinnerungen.
 

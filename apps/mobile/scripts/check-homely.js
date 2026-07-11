@@ -239,6 +239,7 @@ check("required Supabase migrations exist", () => {
     "0008_repair_invitation_and_deletion_rpcs.sql",
     "0009_push_notifications.sql",
     "0010_task_reminder_dispatch.sql",
+    "0011_notification_preference_controls.sql",
   ].forEach((file) => {
     assert(exists(`supabase/migrations/${file}`), `Missing migration ${file}`);
   });
@@ -333,6 +334,7 @@ check("account deletion uses server-side Edge Function and prep RPC", () => {
 
 check("push notification foundation is opt-in and RLS protected", () => {
   const migration = read("supabase/migrations/0009_push_notifications.sql");
+  const preferenceMigration = read("supabase/migrations/0011_notification_preference_controls.sql");
   const service = read("apps/mobile/src/services/pushNotificationService.ts");
   const settings = read("apps/mobile/src/screens/SettingsScreen.tsx");
   const databaseHealth = read("apps/mobile/src/services/databaseHealthService.ts");
@@ -342,12 +344,18 @@ check("push notification foundation is opt-in and RLS protected", () => {
   assert(migration.includes("user_id = auth.uid()"), "Push policies must be scoped to the signed-in user");
   assert(service.includes("requestPermissionsAsync"), "Push service must ask for notification permission");
   assert(service.includes("getExpoPushTokenAsync"), "Push service must register Expo push token");
+  assert(service.includes("sendTestPushNotification"), "Push service should expose a local test notification");
+  assert(service.includes("updatePushPreferences"), "Push service should persist user notification preferences");
+  assert(preferenceMigration.includes("overdue_reminders_enabled"), "Push preferences should include overdue reminder control");
+  assert(preferenceMigration.includes("household_summary_enabled"), "Push preferences should include household summary control");
   assert(settings.includes("Push-Benachrichtigungen") && settings.includes("Push deaktivieren"), "Settings should expose opt-in and opt-out controls");
+  assert(settings.includes("Test senden") && settings.includes("Ruhezeiten"), "Settings should expose test notification and quiet hours controls");
   assert(databaseHealth.includes("push_tokens") && databaseHealth.includes("notification_preferences"), "Database health check should include push tables");
 });
 
 check("server-side task reminder dispatch is claim-logged and scheduled-ready", () => {
   const migration = read("supabase/migrations/0010_task_reminder_dispatch.sql");
+  const preferenceMigration = read("supabase/migrations/0011_notification_preference_controls.sql");
   const edgeFunction = read("supabase/functions/send-task-reminders/index.ts");
   const dispatchDoc = read("docs/24-push-reminder-dispatch.md");
   const databaseHealth = read("apps/mobile/src/services/databaseHealthService.ts");
@@ -358,6 +366,7 @@ check("server-side task reminder dispatch is claim-logged and scheduled-ready", 
   assert(edgeFunction.includes("https://exp.host/--/api/v2/push/send"), "Reminder function should send via Expo Push API");
   assert(edgeFunction.includes("x-homely-reminder-secret"), "Reminder function should require a scheduler secret");
   assert(edgeFunction.includes("DeviceNotRegistered"), "Reminder function should disable unregistered device tokens");
+  assert(preferenceMigration.includes("quiet_hours_start") && preferenceMigration.includes("local_due_at"), "Reminder claims should respect quiet hours");
   assert(databaseHealth.includes("notification_log"), "Database health check should include notification log table");
   assert(dispatchDoc.includes("pg_cron") && dispatchDoc.includes("send-task-reminders"), "Reminder dispatch docs should describe Cron and deployment");
 });

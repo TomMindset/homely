@@ -120,6 +120,7 @@ Vor Production:
 - Rollen testen: Gruender, Verwalter, Mitglied.
 - Automatischen Mehrkonto-Live-Check aus `docs/12-sync-testplan.md` ausfuehren.
 - Push unter `Mehr > Konto > Push` aktivieren, Android-Berechtigung pruefen und Token in Supabase kontrollieren.
+- Push-Testbenachrichtigung senden, einzelne Push-Schalter speichern und Ruhezeiten pruefen.
 - Serverseitige Aufgabenerinnerung mit Edge Function `send-task-reminders`, Cron und `notification_log` pruefen.
 - Push wieder deaktivieren und pruefen, dass keine aktiven Tokens fuer das Konto verbleiben.
 - Mitglied darf Aufgaben erledigen und fremde Aufgaben uebernehmen, aber nicht verwalten.
