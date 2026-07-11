@@ -979,6 +979,46 @@ export function usePlannerState() {
     });
   }
 
+  function activateTaskPackage(taskPackageId: TaskPackageId) {
+    if (!canManagePlan) return;
+    const packageTaskIds = getTaskIdsForPackages([taskPackageId]);
+    const packageTaskIdSet = new Set(packageTaskIds);
+    if (!packageTaskIds.length) return;
+
+    setDeletedTaskIds((items) => {
+      const updated = items.filter((taskId) => !packageTaskIdSet.has(taskId));
+      setStoredItem(storageKeys.deletedTaskIds, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
+
+    setAssignments((items) => {
+      const existingById = new Map(items.map((assignment) => [assignment.id, assignment]));
+      const seedAssignments = (members.length ? redistributeSeedAssignments(members) : seedData.assignments).filter((assignment) =>
+        packageTaskIdSet.has(assignment.taskId),
+      );
+      const seedAssignmentIds = new Set(seedAssignments.map((assignment) => assignment.id));
+      const restoredAssignments = seedAssignments.map((assignment) => existingById.get(assignment.id) ?? assignment);
+      const updated = [...items.filter((assignment) => !seedAssignmentIds.has(assignment.id)), ...restoredAssignments];
+      saveAssignmentState(updated);
+
+      if (activeRemoteHouseholdId) {
+        packageTaskIds.forEach((taskId) => {
+          const seedTask = seedData.taskTemplates.find((task) => task.id === taskId);
+          if (!seedTask) return;
+          runRemoteSync("Vorlagenpaket", () =>
+            upsertRemoteTaskWithAssignments({
+              householdId: activeRemoteHouseholdId,
+              task: { ...seedTask, ...taskOverrides[taskId] },
+              assignments: updated,
+            }),
+          );
+        });
+      }
+
+      return updated;
+    });
+  }
+
   function toggleNewTaskDay(day: DayName) {
     setNewTaskDays((items) => (items.includes(day) ? items.filter((item) => item !== day) : [...items, day]));
   }
@@ -1025,6 +1065,7 @@ export function usePlannerState() {
     accountEmail,
     addMember,
     addTask,
+    activateTaskPackage,
     activeMember,
     activeMemberId: activeMember?.id ?? activeMemberId,
     activeRemoteHouseholdId,

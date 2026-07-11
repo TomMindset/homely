@@ -450,6 +450,7 @@ check("professional MVP UI gates are wired", () => {
   assert(meals.includes("Tauschen aktiv") && meals.includes("longterm"), "Meals should support long-term swap workflow");
   assert(plannerState.includes("restoreDefaultTasks"), "Planner state should restore default task templates");
   assert(tasks.includes("Vorlagen wiederherstellen"), "Tasks screen should expose default template restore");
+  assert(plannerState.includes("activateTaskPackage") && tasks.includes("Musteraufgabenpakete"), "Tasks should allow task packages after onboarding");
   assert(tasks.includes("LongtermTasksOverview") && tasks.includes("Langfristig"), "Tasks screen should include a long-term overview");
   assert(tasks.includes("Zuordnung in KW"), "Task editing should expose assignment controls");
   assert(tasks.includes("taskEditorCard"), "Task editing should use a dedicated full-width editor card");

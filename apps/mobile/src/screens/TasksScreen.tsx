@@ -11,6 +11,7 @@ import {
   type ReminderOptionId,
 } from "../constants/planner";
 import { seedData } from "../data/seedData";
+import { getTaskPackageStats, taskPackages, type TaskPackageId } from "../data/taskPackages";
 import { styles } from "../styles/plannerStyles";
 import { useThemeStyles } from "../theme/useThemeStyles";
 import { Assignment, DayName, Member, TaskTemplate, getRuleByTaskId, getTaskById, ruleLabel } from "../utils/planner";
@@ -43,6 +44,7 @@ export function TasksScreen({
   updateTask,
   deleteTask,
   restoreDefaultTasks,
+  activateTaskPackage,
   hiddenDefaultTaskCount,
   assignments,
   members,
@@ -68,6 +70,7 @@ export function TasksScreen({
   updateTask: (taskId: string, title: string, effortUnits: number, ruleUpdate?: TaskUpdateOptions) => void;
   deleteTask: (taskId: string) => void;
   restoreDefaultTasks: () => void;
+  activateTaskPackage: (taskPackageId: TaskPackageId) => void;
   hiddenDefaultTaskCount: number;
   assignments: Assignment[];
   members: Member[];
@@ -77,6 +80,7 @@ export function TasksScreen({
   const themed = useThemeStyles(darkMode);
   const [mode, setMode] = useState<"manage" | "longterm">("manage");
   const selectedWeekAssignments = assignments.filter((assignment) => assignment.year === seedData.family.year && assignment.week === selectedWeek);
+  const activeTaskIds = new Set(tasks.map((task) => task.id));
 
   return (
     <View style={[styles.section, darkMode && styles.sectionDark, themed.section]}>
@@ -133,6 +137,49 @@ export function TasksScreen({
           >
             <Text style={[styles.secondaryActionText, themed.muted]}>Vorlagen wiederherstellen</Text>
           </TouchableOpacity>
+        </View>
+      )}
+      {canManagePlan && (
+        <View style={styles.packageLibrary}>
+          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Musteraufgabenpakete</Text>
+          <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
+            Aktiviere gezielt weitere Vorlagen, wenn dein Haushalt mehr Struktur braucht. Bereits aktive Pakete bleiben unveraendert.
+          </Text>
+          <View style={styles.packageGrid}>
+            {taskPackages.map((taskPackage) => {
+              const stats = getTaskPackageStats(taskPackage);
+              const missingTaskCount = taskPackage.taskIds.filter((taskId) => !activeTaskIds.has(taskId)).length;
+              const active = missingTaskCount === 0;
+              return (
+                <TouchableOpacity
+                  key={taskPackage.id}
+                  style={[styles.packageCard, themed.card, active && themed.active, !active && hiddenDefaultTaskCount === 0 && styles.disabledButton]}
+                  disabled={active || hiddenDefaultTaskCount === 0}
+                  accessibilityRole="button"
+                  accessibilityLabel={
+                    active
+                      ? `Aufgabenpaket ${taskPackage.title} ist aktiv`
+                      : `Aufgabenpaket ${taskPackage.title} aktivieren`
+                  }
+                  accessibilityState={{ selected: active, disabled: active || hiddenDefaultTaskCount === 0 }}
+                  onPress={() => activateTaskPackage(taskPackage.id)}
+                >
+                  <View style={styles.packageTitleRow}>
+                    <Text style={[styles.taskTitle, themed.text, active && styles.segmentButtonTextActive]}>{taskPackage.shortTitle}</Text>
+                    <Text style={[styles.readinessBadge, themed.muted, active && styles.segmentButtonTextActive]}>
+                      {active ? "Aktiv" : `${missingTaskCount}/${stats.taskCount}`}
+                    </Text>
+                  </View>
+                  <Text style={[styles.taskMeta, themed.muted, active && styles.segmentButtonTextActive]}>{taskPackage.description}</Text>
+                  {!active && hiddenDefaultTaskCount > 0 && (
+                    <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+                      {missingTaskCount} Vorlage(n) aktivieren
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
         </View>
       )}
       <TextInput

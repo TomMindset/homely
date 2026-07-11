@@ -150,6 +150,7 @@ export const styles = StyleSheet.create({
   segmentButtonText: { color: "#6a6259", fontWeight: "900" },
   segmentButtonTextActive: { color: "#fff" },
   packageGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 14 },
+  packageLibrary: { marginBottom: 12 },
   packageCard: { width: "48%", minWidth: 138, flexGrow: 1, borderRadius: 8, borderWidth: 1, borderColor: "#ded6ca", backgroundColor: "#fffaf2", padding: 10 },
   packageTitleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8, marginBottom: 6 },
   dayToggleGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 14 },

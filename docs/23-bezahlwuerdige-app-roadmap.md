@@ -7,8 +7,8 @@ Ziel: Homely soll nicht nur Aufgaben verwalten, sondern Alltagsstress reduzieren
 ## 1. Zuverlaessige Erinnerungen
 
 - Push-Grundlage ist vorhanden: Opt-in, Expo Push Token, Supabase-Tabellen und RLS.
-- Serverseitiger Versand ist vorbereitet: `send-task-reminders`, `notification_log`, Claim-RPC und Cron-Dokumentation.
-- Naechster Schritt: Function deployen, Secret setzen, Cron aktivieren und Samsung-Endtest.
+- Serverseitiger Versand ist aktiv: `send-task-reminders`, `notification_log`, Claim-RPC, `HOMELY_REMINDER_SECRET` und Cron alle 5 Minuten.
+- Naechster Schritt: Samsung-Endtest zusammen mit den naechsten Geraete- und Play-Tests.
 - Erinnerungsarten: Tagesstart, Aufgabe zur Uhrzeit, Vortag, ueberfaellig, Haushaltsstatus fuer Verwalter.
 - UX-Regel: wenige, relevante Hinweise statt Benachrichtigungsflut.
 - Testpflicht: Token registrieren, Testbenachrichtigung, Deaktivierung, keine doppelten Erinnerungen.
@@ -74,12 +74,12 @@ Umsetzungsregel:
 - Beim Erststart werden nur gewaehlte Pakete aktiviert.
 - Nicht gewaehlte Standardaufgaben bleiben ausgeblendet.
 - Verwalter koennen Vorlagen spaeter wiederherstellen und danach bearbeiten.
-- Kuenftig sollen Pakete auch nachtraeglich unter `Aufgaben` anpassbar werden.
+- Pakete koennen nachtraeglich unter `Aufgaben > Bearbeiten` gezielt aktiviert werden.
 
 ## Prioritaet
 
-1. Push-Versand fuer faellige Aufgaben.
-2. Onboarding mit Musteraufgabenpaketen stabilisieren.
+1. Push-Versand fuer faellige Aufgaben auf Samsung endtesten.
+2. Onboarding mit Musteraufgabenpaketen im Geraetetest stabilisieren.
 3. `Heute` als Alltagsschaltzentrale ausbauen.
 4. Fairness-Insights emotionalisieren.
 5. Intelligente Aufgabenverteilung.
