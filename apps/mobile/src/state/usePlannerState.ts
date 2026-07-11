@@ -11,6 +11,7 @@ import {
   type ViewId,
 } from "../constants/planner";
 import { seedData } from "../data/seedData";
+import { defaultTaskPackageIds, getTaskIdsForPackages, type TaskPackageId } from "../data/taskPackages";
 import {
   deleteRemoteMember,
   deleteRemoteTask,
@@ -801,15 +802,26 @@ export function usePlannerState() {
     setStoredItem(storageKeys.familyName, JSON.stringify(name)).catch(() => {});
   }
 
-  function completeOnboarding(name = defaultHouseholdName, householdMembers: HouseholdMemberInput[] = []) {
+  function completeOnboarding(
+    name = defaultHouseholdName,
+    householdMembers: HouseholdMemberInput[] = [],
+    taskPackageIds: TaskPackageId[] = defaultTaskPackageIds,
+  ) {
     const nextMembers = buildHouseholdMembers(householdMembers);
-    const nextAssignments = redistributeSeedAssignments(nextMembers);
+    const selectedSeedTaskIds = getTaskIdsForPackages(taskPackageIds.length ? taskPackageIds : defaultTaskPackageIds);
+    const nextAssignments = redistributeSeedAssignments(nextMembers).filter((assignment) => selectedSeedTaskIds.includes(assignment.taskId));
     const nextFamilyName = name.trim() || defaultHouseholdName;
     const activeOwner = nextMembers.find((member) => member.role === "owner") ?? nextMembers[0];
     const deletedSeedMemberIds = seedData.members.map((member) => member.id);
+    const deletedSeedTaskIds = seedData.taskTemplates
+      .filter((task) => !selectedSeedTaskIds.includes(task.id))
+      .map((task) => task.id);
 
     setFamilyNameState(nextFamilyName);
     setMembers(nextMembers);
+    setTaskOverrides({});
+    setDeletedTaskIds(deletedSeedTaskIds);
+    setCustomTasks([]);
     setAssignments(nextAssignments);
     setSelectedMemberId(activeOwner?.id ?? "all");
     setActiveMemberIdState(activeOwner?.id ?? "");
@@ -817,6 +829,9 @@ export function usePlannerState() {
     setStoredItem(storageKeys.familyName, JSON.stringify(nextFamilyName)).catch(() => {});
     setStoredItem(storageKeys.customMembers, JSON.stringify(nextMembers)).catch(() => {});
     setStoredItem(storageKeys.deletedMemberIds, JSON.stringify(deletedSeedMemberIds)).catch(() => {});
+    setStoredItem(storageKeys.taskOverrides, JSON.stringify({})).catch(() => {});
+    setStoredItem(storageKeys.deletedTaskIds, JSON.stringify(deletedSeedTaskIds)).catch(() => {});
+    setStoredItem(storageKeys.customTasks, JSON.stringify([])).catch(() => {});
     setStoredItem(storageKeys.activeMemberId, JSON.stringify(activeOwner?.id ?? "")).catch(() => {});
     setStoredItem(storageKeys.onboardingComplete, "true").catch(() => {});
     saveAssignmentState(nextAssignments);

@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { memberColors, roleLabel, roleOptions } from "../constants/planner";
+import { defaultTaskPackageIds, getTaskPackageStats, taskPackages, type TaskPackageId } from "../data/taskPackages";
 import { styles } from "../styles/plannerStyles";
 import { useThemeStyles } from "../theme/useThemeStyles";
 
@@ -19,7 +20,7 @@ export function OnboardingScreen({
 }: {
   householdName: string;
   darkMode: boolean;
-  completeOnboarding: (name: string, members: OnboardingMemberInput[]) => void;
+  completeOnboarding: (name: string, members: OnboardingMemberInput[], taskPackageIds: TaskPackageId[]) => void;
   openSettingsAfterOnboarding: () => void;
 }) {
   const [setupMode, setSetupMode] = useState<"create" | "join">("create");
@@ -28,6 +29,7 @@ export function OnboardingScreen({
   const [memberName, setMemberName] = useState("");
   const [memberRole, setMemberRole] = useState("child");
   const [members, setMembers] = useState<OnboardingMemberInput[]>([]);
+  const [selectedTaskPackageIds, setSelectedTaskPackageIds] = useState<TaskPackageId[]>(defaultTaskPackageIds);
   const themed = useThemeStyles(darkMode);
 
   function addHouseholdMember() {
@@ -41,14 +43,22 @@ export function OnboardingScreen({
     setMembers((items) => items.filter((_, itemIndex) => itemIndex !== index));
   }
 
+  function toggleTaskPackage(packageId: TaskPackageId) {
+    setSelectedTaskPackageIds((items) => (items.includes(packageId) ? items.filter((item) => item !== packageId) : [...items, packageId]));
+  }
+
   function finish() {
     if (!founderName.trim()) {
       Alert.alert("Dein Name fehlt", "Bitte gib zuerst deinen eigenen Vornamen ein. Du wirst als Gruender angelegt.");
       return;
     }
+    if (setupMode === "create" && selectedTaskPackageIds.length === 0) {
+      Alert.alert("Aufgabenpaket fehlt", "Bitte waehle mindestens ein Musteraufgabenpaket. Du kannst spaeter Aufgaben entfernen oder ergaenzen.");
+      return;
+    }
 
     const onboardingMembers = setupMode === "join" ? [{ name: founderName.trim(), role: "owner" }] : [{ name: founderName.trim(), role: "owner" }, ...members];
-    completeOnboarding(draftName.trim() || "Mein Haushalt", onboardingMembers);
+    completeOnboarding(draftName.trim() || "Mein Haushalt", onboardingMembers, setupMode === "create" ? selectedTaskPackageIds : defaultTaskPackageIds);
     if (setupMode === "join") {
       openSettingsAfterOnboarding();
     }
@@ -128,6 +138,32 @@ export function OnboardingScreen({
             <TouchableOpacity style={[styles.secondaryActionFull, themed.soft]} accessibilityRole="button" accessibilityLabel="Person hinzufuegen" onPress={addHouseholdMember}>
               <Text style={[styles.secondaryActionText, themed.muted]}>Person hinzufuegen</Text>
             </TouchableOpacity>
+            <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Musteraufgabenpakete</Text>
+            <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
+              Starte mit passenden Vorlagen. Homely aktiviert nur die ausgewaehlten Aufgaben; alles laesst sich spaeter bearbeiten.
+            </Text>
+            <View style={styles.packageGrid}>
+              {taskPackages.map((taskPackage) => {
+                const active = selectedTaskPackageIds.includes(taskPackage.id);
+                const stats = getTaskPackageStats(taskPackage);
+                return (
+                  <TouchableOpacity
+                    key={taskPackage.id}
+                    style={[styles.packageCard, themed.card, active && themed.active]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Aufgabenpaket ${taskPackage.title}`}
+                    accessibilityState={{ selected: active }}
+                    onPress={() => toggleTaskPackage(taskPackage.id)}
+                  >
+                    <View style={styles.packageTitleRow}>
+                      <Text style={[styles.taskTitle, themed.text, active && styles.segmentButtonTextActive]}>{taskPackage.shortTitle}</Text>
+                      <Text style={[styles.readinessBadge, themed.muted, active && styles.segmentButtonTextActive]}>{stats.taskCount} Aufgaben</Text>
+                    </View>
+                    <Text style={[styles.taskMeta, themed.muted, active && styles.segmentButtonTextActive]}>{taskPackage.description}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
           </>
         ) : (
           <View style={[styles.compactInfoBox, themed.soft]}>

@@ -418,6 +418,8 @@ check("professional MVP UI gates are wired", () => {
   const tasks = read("apps/mobile/src/screens/TasksScreen.tsx");
   const fairness = read("apps/mobile/src/screens/FairnessScreen.tsx");
   const settings = read("apps/mobile/src/screens/SettingsScreen.tsx");
+  const onboarding = read("apps/mobile/src/screens/OnboardingScreen.tsx");
+  const taskPackages = read("apps/mobile/src/data/taskPackages.ts");
   const family = read("apps/mobile/src/screens/FamilyScreen.tsx");
   const styles = read("apps/mobile/src/styles/plannerStyles.ts");
   assert(app.includes("syncStatus={planner.syncStatus}"), "Settings should receive planner sync status");
@@ -439,6 +441,9 @@ check("professional MVP UI gates are wired", () => {
   assert(family.includes("memberSummary") && family.includes("memberActions"), "Household member rows should separate info and actions");
   assert(settings.includes("releaseGateItems") && settings.includes("Play Console"), "Readiness screen should include Play release gates");
   assert(settings.includes("accountArea") && settings.includes("Identitaet") && settings.includes("Cloud"), "Account settings should be grouped into subareas");
+  assert(onboarding.includes("Musteraufgabenpakete") && onboarding.includes("selectedTaskPackageIds"), "Onboarding should expose task package selection");
+  assert(taskPackages.includes("Basis-Haushalt") && taskPackages.includes("WG & geteilter Haushalt"), "Task packages should include household-specific starter sets");
+  assert(plannerState.includes("getTaskIdsForPackages") && plannerState.includes("deletedSeedTaskIds"), "Onboarding should activate only selected task package templates");
   assert(family.includes("Supabase-Sync aktivierst"), "Privacy copy should mention optional cloud sync");
   assert(styles.includes("navBottomInset = Platform.OS === \"android\" ? 52"), "Android bottom nav inset should protect system controls");
 });
@@ -470,6 +475,7 @@ check("Homely design quality standard covers modern app expectations", () => {
 check("Google Play release pack is prepared", () => {
   const releasePack = read("docs/18-google-play-release-pack.md");
   const journey = read("docs/19-customer-journey-live-readiness.md");
+  const paidRoadmap = read("docs/23-bezahlwuerdige-app-roadmap.md");
   const websiteReadme = read("website/homely-haushaltsmanager.de/README.md");
   const websiteCname = read("website/homely-haushaltsmanager.de/CNAME");
   [
@@ -484,6 +490,7 @@ check("Google Play release pack is prepared", () => {
     assert(releasePack.includes(section), `Release pack missing ${section}`);
   });
   assert(journey.includes("Regelmaessiger Nutzer") && journey.includes("https://aesti.de/datenschutz"), "Customer journey and live readiness doc missing");
+  assert(paidRoadmap.includes("Musteraufgabenpakete") && paidRoadmap.includes("Zuverlaessige Erinnerungen"), "Paid-quality roadmap should include packages and reminders");
   assert(websiteReadme.includes("https://aesti.de/datenschutz"), "Website README should use the temporary aesti.de privacy URL");
   assert(websiteCname.trim() === "aesti.de", "GitHub Pages CNAME should point to aesti.de");
 });
