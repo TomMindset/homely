@@ -16,6 +16,8 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 
 - Neuer lokaler Haushalt startet ohne private Demo-Namen.
 - Gruendername ist Pflicht.
+- Startprofile `Familie`, `WG`, `Paar` und `Haus` setzen passende Musteraufgabenpakete.
+- Die Startplan-Vorschau zeigt Aufgabenanzahl, Punkte und aktive Pakete vor dem Start.
 - Mindestens ein Musteraufgabenpaket ist Pflicht.
 - Vorauswahl `Basis` und `Essen` erzeugt einen kleinen Startplan statt aller Excel-Vorlagen.
 - Zusaetzliche Pakete wie `Familie`, `WG`, `Putzen` oder `Extras` aktivieren passende weitere Aufgaben.

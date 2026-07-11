@@ -80,3 +80,12 @@ export function getTaskPackageStats(taskPackage: TaskPackage) {
     totalUnits: tasks.reduce((sum, task) => sum + task.effortUnits, 0),
   };
 }
+
+export function getTaskPackageSelectionStats(packageIds: TaskPackageId[]) {
+  const taskIds = new Set(getTaskIdsForPackages(packageIds));
+  const tasks = seedData.taskTemplates.filter((task) => taskIds.has(task.id));
+  return {
+    taskCount: tasks.length,
+    totalUnits: tasks.reduce((sum, task) => sum + task.effortUnits, 0),
+  };
+}

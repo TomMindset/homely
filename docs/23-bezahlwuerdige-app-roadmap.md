@@ -18,6 +18,8 @@ Ziel: Homely soll nicht nur Aufgaben verwalten, sondern Alltagsstress reduzieren
 ## 2. Richtig guter Erststart
 
 - Onboarding bleibt kurz: Haushalt, Gruender, Mitglieder, Musteraufgabenpakete.
+- Startprofile fuer Familie, WG, Paar und Haus setzen passende Paketvorschlaege.
+- Eine Startplan-Vorschau zeigt Aufgabenanzahl, Punkte und aktive Pakete vor dem Start.
 - Nutzer waehlen Aufgabenpakete statt einzelne Aufgabenlisten zu pflegen.
 - Homely startet danach auf `Heute` mit einem sichtbaren Plan.
 - Einladung bleibt eigener Flow: erst Konto, dann Einladungscode.

@@ -472,6 +472,8 @@ check("professional MVP UI gates are wired", () => {
   assert(settings.includes("releaseGateItems") && settings.includes("Play Console"), "Readiness screen should include Play release gates");
   assert(settings.includes("accountArea") && settings.includes("Identitaet") && settings.includes("Cloud"), "Account settings should be grouped into subareas");
   assert(onboarding.includes("Musteraufgabenpakete") && onboarding.includes("selectedTaskPackageIds"), "Onboarding should expose task package selection");
+  assert(onboarding.includes("householdProfiles") && onboarding.includes("Startplan-Vorschau"), "Onboarding should guide users with household profiles and preview");
+  assert(taskPackages.includes("getTaskPackageSelectionStats"), "Task packages should expose selection stats for onboarding preview");
   assert(taskPackages.includes("Basis-Haushalt") && taskPackages.includes("WG & geteilter Haushalt"), "Task packages should include household-specific starter sets");
   assert(plannerState.includes("getTaskIdsForPackages") && plannerState.includes("deletedSeedTaskIds"), "Onboarding should activate only selected task package templates");
   assert(family.includes("Supabase-Sync aktivierst"), "Privacy copy should mention optional cloud sync");

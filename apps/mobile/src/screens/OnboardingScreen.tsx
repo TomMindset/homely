@@ -1,7 +1,13 @@
 import React, { useState } from "react";
 import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { memberColors, roleLabel, roleOptions } from "../constants/planner";
-import { defaultTaskPackageIds, getTaskPackageStats, taskPackages, type TaskPackageId } from "../data/taskPackages";
+import {
+  defaultTaskPackageIds,
+  getTaskPackageSelectionStats,
+  getTaskPackageStats,
+  taskPackages,
+  type TaskPackageId,
+} from "../data/taskPackages";
 import { styles } from "../styles/plannerStyles";
 import { useThemeStyles } from "../theme/useThemeStyles";
 
@@ -11,6 +17,37 @@ export type OnboardingMemberInput = {
 };
 
 const manageableRoles = roleOptions.filter((role) => role.id !== "owner");
+const householdProfiles: Array<{
+  id: string;
+  title: string;
+  detail: string;
+  packageIds: TaskPackageId[];
+}> = [
+  {
+    id: "family",
+    title: "Familie",
+    detail: "Kinder, Erwachsene und wiederkehrender Alltag.",
+    packageIds: ["basis", "family", "meal_week"],
+  },
+  {
+    id: "shared_home",
+    title: "WG",
+    detail: "Gemeinsame Flaechen, klare Dienste, wenig Diskussion.",
+    packageIds: ["basis", "shared_home"],
+  },
+  {
+    id: "couple",
+    title: "Paar",
+    detail: "Schlanker Plan fuer zwei Personen.",
+    packageIds: ["basis", "meal_week"],
+  },
+  {
+    id: "house",
+    title: "Haus",
+    detail: "Mehr Flaeche, Garten oder saisonale Extras.",
+    packageIds: ["basis", "cleaning", "seasonal"],
+  },
+];
 
 export function OnboardingScreen({
   householdName,
@@ -29,8 +66,14 @@ export function OnboardingScreen({
   const [memberName, setMemberName] = useState("");
   const [memberRole, setMemberRole] = useState("child");
   const [members, setMembers] = useState<OnboardingMemberInput[]>([]);
+  const [householdProfileId, setHouseholdProfileId] = useState("family");
   const [selectedTaskPackageIds, setSelectedTaskPackageIds] = useState<TaskPackageId[]>(defaultTaskPackageIds);
   const themed = useThemeStyles(darkMode);
+  const selectedTaskStats = getTaskPackageSelectionStats(selectedTaskPackageIds);
+  const selectedPackageTitles = taskPackages
+    .filter((taskPackage) => selectedTaskPackageIds.includes(taskPackage.id))
+    .map((taskPackage) => taskPackage.shortTitle)
+    .join(", ");
 
   function addHouseholdMember() {
     if (!memberName.trim()) return;
@@ -45,6 +88,11 @@ export function OnboardingScreen({
 
   function toggleTaskPackage(packageId: TaskPackageId) {
     setSelectedTaskPackageIds((items) => (items.includes(packageId) ? items.filter((item) => item !== packageId) : [...items, packageId]));
+  }
+
+  function selectHouseholdProfile(profileId: string, packageIds: TaskPackageId[]) {
+    setHouseholdProfileId(profileId);
+    setSelectedTaskPackageIds(packageIds);
   }
 
   function finish() {
@@ -73,6 +121,18 @@ export function OnboardingScreen({
           Homely funktioniert fuer Familien, Wohngemeinschaften und andere Haushalte. Du bist zuerst der Gruender und kannst weitere Personen
           hinzufuegen.
         </Text>
+        <View style={styles.onboardingProgressRow}>
+          {[
+            { title: "1", detail: "Haushalt" },
+            { title: "2", detail: "Personen" },
+            { title: "3", detail: "Startplan" },
+          ].map((step) => (
+            <View key={step.title} style={[styles.onboardingStepPill, themed.soft]}>
+              <Text style={[styles.readinessBadge, themed.muted]}>{step.title}</Text>
+              <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>{step.detail}</Text>
+            </View>
+          ))}
+        </View>
         <View style={styles.setupChoiceRow}>
           {[
             { id: "create", title: "Neu starten", text: "Haushalt lokal anlegen und spaeter optional synchronisieren." },
@@ -94,6 +154,29 @@ export function OnboardingScreen({
             );
           })}
         </View>
+        {setupMode === "create" && (
+          <>
+            <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Was passt am besten?</Text>
+            <View style={styles.profileGrid}>
+              {householdProfiles.map((profile) => {
+                const active = householdProfileId === profile.id;
+                return (
+                  <TouchableOpacity
+                    key={profile.id}
+                    style={[styles.profileCard, themed.card, active && themed.active]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Startprofil ${profile.title}`}
+                    accessibilityState={{ selected: active }}
+                    onPress={() => selectHouseholdProfile(profile.id, profile.packageIds)}
+                  >
+                    <Text style={[styles.taskTitle, themed.text, active && styles.segmentButtonTextActive]}>{profile.title}</Text>
+                    <Text style={[styles.taskMeta, themed.muted, active && styles.segmentButtonTextActive]}>{profile.detail}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </>
+        )}
         <TextInput
           style={[styles.input, themed.input, darkMode && styles.inputDark]}
           value={draftName}
@@ -142,6 +225,15 @@ export function OnboardingScreen({
             <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
               Starte mit passenden Vorlagen. Homely aktiviert nur die ausgewaehlten Aufgaben; alles laesst sich spaeter bearbeiten.
             </Text>
+            <View style={[styles.startPlanPreview, themed.soft]}>
+              <Text style={[styles.taskTitle, themed.text, darkMode && styles.textDark]}>Startplan-Vorschau</Text>
+              <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+                {selectedTaskStats.taskCount} Aufgaben - {selectedTaskStats.totalUnits} Punkte pro Woche als erste Maske
+              </Text>
+              <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+                Aktiv: {selectedPackageTitles || "noch nichts ausgewaehlt"}
+              </Text>
+            </View>
             <View style={styles.packageGrid}>
               {taskPackages.map((taskPackage) => {
                 const active = selectedTaskPackageIds.includes(taskPackage.id);
