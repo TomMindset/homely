@@ -441,6 +441,7 @@ check("professional MVP UI gates are wired", () => {
   const styles = read("apps/mobile/src/styles/plannerStyles.ts");
   assert(app.includes("syncStatus={planner.syncStatus}"), "Settings should receive planner sync status");
   assert(today.includes('"mine" | "all"') && today.includes("Meine"), "Today should support mine/all personal scope");
+  assert(today.includes("TodayFocus") && today.includes("Jetzt offen") && today.includes("Haushalt helfen"), "Today should act as a personal daily command center");
   assert(plannerState.includes("setSelectedMemberId(nextActiveMemberId || \"all\")"), "Planner should start on the active member when available");
   assert(plannerState.includes("setSelectedMemberId(memberId)") && plannerState.includes("setView(\"today\")"), "Active member switching should return to today and personal scope");
   assert(week.includes("modeSummary"), "Week summary should follow selected week mode");

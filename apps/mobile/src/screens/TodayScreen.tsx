@@ -34,12 +34,18 @@ export function TodayScreen({
     (assignment) => assignment.memberId === activeMemberId || assignment.completedByMemberId === activeMemberId,
   );
   const displayedAssignments = mode === "mine" ? ownAssignments : assignments;
+  const displayedOpenAssignments = displayedAssignments.filter((assignment) => assignment.status !== "done");
+  const displayedDoneAssignments = displayedAssignments.filter((assignment) => assignment.status === "done");
+  const ownOpenAssignments = ownAssignments.filter((assignment) => assignment.status !== "done");
+  const householdOpenAssignments = assignments.filter((assignment) => assignment.status !== "done");
+  const otherOpenCount = householdOpenAssignments.filter((assignment) => assignment.memberId !== activeMemberId).length;
+  const openUnits = displayedOpenAssignments.reduce((sum, assignment) => sum + (getTaskById(tasks, assignment.taskId)?.effortUnits || 0), 0);
 
   return (
     <View style={[styles.section, darkMode && styles.sectionDark, themed.section]}>
       <Text style={[styles.eyebrow, themed.muted]}>Heute</Text>
       <Text style={[styles.sectionTitle, themed.text, darkMode && styles.textDark]}>
-        {mode === "mine" ? activeMember?.name || "Meine" : "Alle"} Aufgaben
+        {mode === "mine" ? "Dein Tag" : "Haushalt heute"}
       </Text>
       <View style={styles.segmented}>
         {[
@@ -61,6 +67,20 @@ export function TodayScreen({
           );
         })}
       </View>
+      <TodayFocus
+        mode={mode}
+        activeMemberName={activeMember?.name}
+        openCount={displayedOpenAssignments.length}
+        doneCount={displayedDoneAssignments.length}
+        ownOpenCount={ownOpenAssignments.length}
+        householdOpenCount={householdOpenAssignments.length}
+        otherOpenCount={otherOpenCount}
+        openUnits={openUnits}
+        darkMode={darkMode}
+        canManagePlan={canManagePlan}
+        setMode={setMode}
+        setView={setView}
+      />
       {!displayedAssignments.length && (
         <View style={[styles.emptyStateCard, themed.soft]}>
           <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>
@@ -88,7 +108,35 @@ export function TodayScreen({
           </View>
         </View>
       )}
-      {displayedAssignments.map((assignment) => (
+      {!!displayedOpenAssignments.length && (
+        <View style={styles.todayListHeader}>
+          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Jetzt offen</Text>
+          <Text style={[styles.readinessBadge, themed.muted, darkMode && styles.mutedDark]}>
+            {displayedOpenAssignments.length} Aufgabe(n)
+          </Text>
+        </View>
+      )}
+      {displayedOpenAssignments.map((assignment) => (
+        <TaskRow
+          key={assignment.id}
+          assignment={assignment}
+          task={getTaskById(tasks, assignment.taskId)}
+          member={members.find((item) => item.id === assignment.memberId)}
+          completedByMember={members.find((item) => item.id === assignment.completedByMemberId)}
+          darkMode={darkMode}
+          activeMemberId={activeMemberId}
+          toggleAssignment={toggleAssignment}
+        />
+      ))}
+      {!!displayedDoneAssignments.length && (
+        <View style={styles.todayListHeader}>
+          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Erledigt</Text>
+          <Text style={[styles.readinessBadge, themed.muted, darkMode && styles.mutedDark]}>
+            {displayedDoneAssignments.length} abgehakt
+          </Text>
+        </View>
+      )}
+      {displayedDoneAssignments.map((assignment) => (
         <TaskRow
           key={assignment.id}
           assignment={assignment}
@@ -101,8 +149,101 @@ export function TodayScreen({
         />
       ))}
       <View style={[styles.mealBox, darkMode && styles.mealBoxDark, themed.soft]}>
-        <Text style={[styles.eyebrow, themed.muted]}>Essen</Text>
-        <Text style={[styles.mealTitle, themed.text, darkMode && styles.textDark]}>{meal?.title || "Noch kein Essen geplant"}</Text>
+        <View style={styles.mealHeaderRow}>
+          <View style={styles.taskTextBox}>
+            <Text style={[styles.eyebrow, themed.muted]}>Essen</Text>
+            <Text style={[styles.mealTitle, themed.text, darkMode && styles.textDark]}>{meal?.title || "Noch kein Essen geplant"}</Text>
+          </View>
+          <TouchableOpacity style={[styles.editButton, { borderColor: themed.theme.primary }]} accessibilityRole="button" onPress={() => setView("meals")}>
+            <Text style={[styles.editButtonText, { color: themed.theme.primary }]}>Plan</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+function TodayFocus({
+  mode,
+  activeMemberName,
+  openCount,
+  doneCount,
+  ownOpenCount,
+  householdOpenCount,
+  otherOpenCount,
+  openUnits,
+  darkMode,
+  canManagePlan,
+  setMode,
+  setView,
+}: {
+  mode: "mine" | "all";
+  activeMemberName?: string;
+  openCount: number;
+  doneCount: number;
+  ownOpenCount: number;
+  householdOpenCount: number;
+  otherOpenCount: number;
+  openUnits: number;
+  darkMode: boolean;
+  canManagePlan: boolean;
+  setMode: (mode: "mine" | "all") => void;
+  setView: (view: ViewId) => void;
+}) {
+  const themed = useThemeStyles(darkMode);
+  const title =
+    mode === "mine"
+      ? ownOpenCount > 0
+        ? `${activeMemberName ?? "Du"}: ${ownOpenCount} offen`
+        : otherOpenCount > 0
+          ? "Dein Part ist frei"
+          : "Heute sieht gut aus"
+      : householdOpenCount > 0
+        ? `${householdOpenCount} im Haushalt offen`
+        : "Haushalt ist erledigt";
+  const copy =
+    mode === "mine"
+      ? ownOpenCount > 0
+        ? "Erledige zuerst deine offenen Aufgaben. Wenn du eine andere Aufgabe uebernimmst, zaehlt sie fuer dich als erledigt."
+        : otherOpenCount > 0
+          ? "Fuer dich ist nichts offen. Du kannst trotzdem im Haushalt helfen."
+          : "Keine offenen Aufgaben fuer heute. Homely bleibt ruhig, wenn alles erledigt ist."
+      : householdOpenCount > 0
+        ? "Alle offenen Aufgaben des Tages auf einen Blick. Tippen markiert die Aufgabe als von dir erledigt."
+        : "Alle sichtbaren Aufgaben fuer heute sind abgehakt.";
+
+  return (
+    <View style={[styles.todayFocusBand, themed.soft]}>
+      <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>{title}</Text>
+      <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>{copy}</Text>
+      <View style={styles.summaryGrid}>
+        <View style={[styles.summaryTile, darkMode && styles.rowDark, themed.card]}>
+          <Text style={[styles.summaryNumber, themed.text, darkMode && styles.textDark]}>{openCount}</Text>
+          <Text style={[styles.summaryLabel, themed.muted, darkMode && styles.mutedDark]}>Offen</Text>
+        </View>
+        <View style={[styles.summaryTile, darkMode && styles.rowDark, themed.card]}>
+          <Text style={[styles.summaryNumber, themed.text, darkMode && styles.textDark]}>{doneCount}</Text>
+          <Text style={[styles.summaryLabel, themed.muted, darkMode && styles.mutedDark]}>Erledigt</Text>
+        </View>
+        <View style={[styles.summaryTile, darkMode && styles.rowDark, themed.card]}>
+          <Text style={[styles.summaryNumber, themed.text, darkMode && styles.textDark]}>{formatUnits(openUnits)}</Text>
+          <Text style={[styles.summaryLabel, themed.muted, darkMode && styles.mutedDark]}>Punkte offen</Text>
+        </View>
+      </View>
+      <View style={styles.todayActionRow}>
+        {mode === "mine" && otherOpenCount > 0 && (
+          <TouchableOpacity style={[styles.primaryActionInline, themed.primary]} accessibilityRole="button" onPress={() => setMode("all")}>
+            <Text style={styles.primaryActionText}>Haushalt helfen</Text>
+          </TouchableOpacity>
+        )}
+        <TouchableOpacity style={[styles.secondaryAction, themed.buttonSurface]} accessibilityRole="button" onPress={() => setView("week")}>
+          <Text style={[styles.secondaryActionText, themed.muted]}>Woche</Text>
+        </TouchableOpacity>
+        {canManagePlan && openCount === 0 && (
+          <TouchableOpacity style={[styles.secondaryAction, themed.buttonSurface]} accessibilityRole="button" onPress={() => setView("tasks")}>
+            <Text style={[styles.secondaryActionText, themed.muted]}>Planen</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );

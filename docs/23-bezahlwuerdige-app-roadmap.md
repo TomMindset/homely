@@ -24,6 +24,7 @@ Ziel: Homely soll nicht nur Aufgaben verwalten, sondern Alltagsstress reduzieren
 
 - `Heute` ist der Standard-Startpunkt fuer regelmaessige Nutzer.
 - Normale Mitglieder sehen zuerst eigene Aufgaben.
+- `Heute` zeigt eine Fokuskarte mit offenen Aufgaben, erledigten Aufgaben, offenen Punkten und der Option, im Haushalt zu helfen.
 - Verwalter erhalten klare Einstellbereiche fuer Haushalt, Aufgaben, Sync, Push und Check.
 - Technische Fehler bleiben im Diagnose-/Checkbereich; Alltagstexte bleiben ruhig und konkret.
 
@@ -80,7 +81,7 @@ Umsetzungsregel:
 
 1. Push-Versand fuer faellige Aufgaben auf Samsung endtesten.
 2. Onboarding mit Musteraufgabenpaketen im Geraetetest stabilisieren.
-3. `Heute` als Alltagsschaltzentrale ausbauen.
+3. `Heute` als Alltagsschaltzentrale auf Samsung gegen echte Haushaltsdaten testen.
 4. Fairness-Insights emotionalisieren.
 5. Intelligente Aufgabenverteilung.
 6. Kalender- und Jahresmodus.
