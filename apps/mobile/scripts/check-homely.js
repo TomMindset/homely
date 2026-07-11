@@ -447,6 +447,8 @@ check("professional MVP UI gates are wired", () => {
   assert(week.includes("modeSummary"), "Week summary should follow selected week mode");
   assert(app.includes("assignments={planner.weekAssignments}") && fairness.includes("KW {selectedWeek}"), "Fairness should render only the selected week");
   assert(fairness.includes("useMemo") && fairness.includes("taskById"), "Fairness should memoize task lookups");
+  assert(fairness.includes("FairnessInsight") && fairness.includes("Entlastungsvorschlag"), "Fairness should explain balance and suggest relief");
+  assert(fairness.includes("Im Ziel") && fairness.includes("Traegt mehr") && fairness.includes("Hat Luft"), "Fairness should classify member load");
   assert(settings.includes("Fairness & Motivation"), "Settings should describe fairness readiness");
   assert(meals.includes("Tauschen aktiv") && meals.includes("longterm"), "Meals should support long-term swap workflow");
   assert(plannerState.includes("restoreDefaultTasks"), "Planner state should restore default task templates");

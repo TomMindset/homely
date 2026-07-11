@@ -40,6 +40,7 @@ Ziel: Homely soll nicht nur Aufgaben verwalten, sondern Alltagsstress reduzieren
 - Fairness wird emotionaler: weniger Tabelle, mehr Haushaltsgefuehl.
 - Beispiele: `Diese Woche ist ausgeglichen`, `Tom traegt gerade mehr`, `Entlastung moeglich`.
 - Zahlen bleiben sichtbar: Soll, Plan und Ist je Person.
+- Homely zeigt eine Fairness-Diagnose, Last-Klassifizierung pro Person und einen optionalen Entlastungsvorschlag fuer Verwalter.
 - Tonalitaet: nicht beschuldigend, sondern entlastend.
 
 ## 6. Kalender- und Jahresmodus
@@ -82,7 +83,7 @@ Umsetzungsregel:
 1. Push-Versand fuer faellige Aufgaben auf Samsung endtesten.
 2. Onboarding mit Musteraufgabenpaketen im Geraetetest stabilisieren.
 3. `Heute` als Alltagsschaltzentrale auf Samsung gegen echte Haushaltsdaten testen.
-4. Fairness-Insights emotionalisieren.
+4. Fairness-Insights auf Samsung gegen echte Haushaltsdaten testen.
 5. Intelligente Aufgabenverteilung.
 6. Kalender- und Jahresmodus.
 7. Polish-Schicht pro Release.
