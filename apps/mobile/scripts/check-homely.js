@@ -238,6 +238,7 @@ check("required Supabase migrations exist", () => {
     "0007_account_deletion_support.sql",
     "0008_repair_invitation_and_deletion_rpcs.sql",
     "0009_push_notifications.sql",
+    "0010_task_reminder_dispatch.sql",
   ].forEach((file) => {
     assert(exists(`supabase/migrations/${file}`), `Missing migration ${file}`);
   });
@@ -343,6 +344,22 @@ check("push notification foundation is opt-in and RLS protected", () => {
   assert(service.includes("getExpoPushTokenAsync"), "Push service must register Expo push token");
   assert(settings.includes("Push-Benachrichtigungen") && settings.includes("Push deaktivieren"), "Settings should expose opt-in and opt-out controls");
   assert(databaseHealth.includes("push_tokens") && databaseHealth.includes("notification_preferences"), "Database health check should include push tables");
+});
+
+check("server-side task reminder dispatch is claim-logged and scheduled-ready", () => {
+  const migration = read("supabase/migrations/0010_task_reminder_dispatch.sql");
+  const edgeFunction = read("supabase/functions/send-task-reminders/index.ts");
+  const dispatchDoc = read("docs/24-push-reminder-dispatch.md");
+  const databaseHealth = read("apps/mobile/src/services/databaseHealthService.ts");
+  assert(migration.includes("create table if not exists public.notification_log"), "Reminder dispatch should log notification attempts");
+  assert(migration.includes("notification_log_task_reminder_unique"), "Reminder log should prevent duplicate task reminders");
+  assert(migration.includes("claim_due_task_reminders"), "Reminder dispatch should claim due reminders atomically");
+  assert(migration.includes("grant execute on function public.claim_due_task_reminders"), "Claim RPC should be executable by service role");
+  assert(edgeFunction.includes("https://exp.host/--/api/v2/push/send"), "Reminder function should send via Expo Push API");
+  assert(edgeFunction.includes("x-homely-reminder-secret"), "Reminder function should require a scheduler secret");
+  assert(edgeFunction.includes("DeviceNotRegistered"), "Reminder function should disable unregistered device tokens");
+  assert(databaseHealth.includes("notification_log"), "Database health check should include notification log table");
+  assert(dispatchDoc.includes("pg_cron") && dispatchDoc.includes("send-task-reminders"), "Reminder dispatch docs should describe Cron and deployment");
 });
 
 check("member payload normalizes role, short code and soft-delete reset", () => {

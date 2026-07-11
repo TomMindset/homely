@@ -7,7 +7,8 @@ Ziel: Homely soll nicht nur Aufgaben verwalten, sondern Alltagsstress reduzieren
 ## 1. Zuverlaessige Erinnerungen
 
 - Push-Grundlage ist vorhanden: Opt-in, Expo Push Token, Supabase-Tabellen und RLS.
-- Naechster Schritt: Edge Function mit Scheduler fuer faellige Aufgaben.
+- Serverseitiger Versand ist vorbereitet: `send-task-reminders`, `notification_log`, Claim-RPC und Cron-Dokumentation.
+- Naechster Schritt: Function deployen, Secret setzen, Cron aktivieren und Samsung-Endtest.
 - Erinnerungsarten: Tagesstart, Aufgabe zur Uhrzeit, Vortag, ueberfaellig, Haushaltsstatus fuer Verwalter.
 - UX-Regel: wenige, relevante Hinweise statt Benachrichtigungsflut.
 - Testpflicht: Token registrieren, Testbenachrichtigung, Deaktivierung, keine doppelten Erinnerungen.

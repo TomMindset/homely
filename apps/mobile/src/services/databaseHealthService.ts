@@ -10,6 +10,7 @@ const requiredTables = [
   "household_invitations",
   "push_tokens",
   "notification_preferences",
+  "notification_log",
 ];
 
 const requiredRpcs = ["delete_household_with_data"];

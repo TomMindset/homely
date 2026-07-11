@@ -25,7 +25,7 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 
 - `Datenbank pruefen` zeigt keine fehlenden Tabellen.
 - `profiles`, `households`, `household_memberships`, `tasks`, `assignments`, `meals`, `household_invitations`, `push_tokens`, `notification_preferences` sind erreichbar.
-- Migrationen `0001` bis `0009` sind in Supabase ausgefuehrt.
+- Migrationen `0001` bis `0010` sind in Supabase ausgefuehrt.
 - Edge Function `delete-account` ist deployed, bevor die Kontoloeschung getestet wird.
 - Redirect URL `homely://auth/callback` ist in Supabase erlaubt.
 - E-Mail-Bestaetigungslink oder Passwort-Reset-Link oeffnet Homely und setzt die Session.
@@ -72,13 +72,17 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 ## Push-Benachrichtigungen
 
 - Migration `0009_push_notifications.sql` ist in Supabase ausgefuehrt.
+- Migration `0010_task_reminder_dispatch.sql` ist in Supabase ausgefuehrt.
+- Edge Function `send-task-reminders` ist deployed und mit `HOMELY_REMINDER_SECRET` geschuetzt.
+- Supabase Cron ruft `send-task-reminders` regelmaessig auf.
 - In der installierten Preview-/Play-Test-App unter `Mehr > Konto > Push` `Aktivieren` ausfuehren.
 - Android fragt nach Benachrichtigungsberechtigung und der Nutzer kann bewusst zustimmen.
 - Danach zeigt der Bereich mindestens ein registriertes Geraet.
 - Supabase enthaelt fuer den eingeloggten Nutzer einen aktiven Eintrag in `push_tokens`.
+- Aufgabe mit Erinnerung im naechsten Zeitfenster erzeugt einen Eintrag in `notification_log`.
+- `notification_log.status` wechselt nach Versand auf `sent` oder bei Problemen auf `failed`.
 - `Push deaktivieren` setzt die Geraete des Nutzers auf inaktiv und schaltet Preferences aus.
 - Zweites Konto registriert einen eigenen Push-Token, ohne Tokens des Gruenders sehen oder veraendern zu koennen.
-- Hinweis: Serverseitiger Versand faelliger Erinnerungen ist ein eigener Release-Schritt nach der Token-Grundlage.
 
 ## Automatischer Mehrkonto-Live-Check
 

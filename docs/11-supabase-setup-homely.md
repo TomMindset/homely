@@ -1,6 +1,6 @@
 # Homely Supabase Setup
 
-Stand: 2026-07-03
+Stand: 2026-07-11
 
 Entscheidung: Homely verwendet Supabase als Ziel-Backend fuer Account, Haushalts-Sync, Rollen und Einladungen.
 
@@ -85,6 +85,22 @@ supabase/migrations/0008_repair_invitation_and_deletion_rpcs.sql
 
 Sie qualifiziert `pgcrypto`-Funktionen ueber das Supabase-`extensions`-Schema und stellt sicher, dass `create_household_invitation`, `accept_household_invitation` und `delete_household_with_data` remote verfuegbar sind.
 
+Fuer Push-Opt-in und Geraete-Tokens danach ausfuehren:
+
+```text
+supabase/migrations/0009_push_notifications.sql
+```
+
+Sie legt `push_tokens` und `notification_preferences` mit RLS an. Nutzer sehen und aendern nur eigene Push-Daten.
+
+Fuer automatische Aufgabenerinnerungen danach ausfuehren:
+
+```text
+supabase/migrations/0010_task_reminder_dispatch.sql
+```
+
+Sie legt `notification_log` an und stellt `claim_due_task_reminders` bereit. Die RPC claimt faellige Erinnerungen atomar, damit Cron/Edge Function keine doppelten Pushs verschickt.
+
 Die Edge Function liegt hier:
 
 ```text
@@ -104,6 +120,14 @@ Danach `delete-account` erneut deployen. Wichtig: `--no-verify-jwt` ist fuer die
 ```powershell
 & 'C:\Users\hoffm\.cache\codex-runtimes\codex-primary-runtime\dependencies\bin\pnpm.cmd' dlx supabase@latest functions deploy delete-account --project-ref enjogmjdasznqclbhkgs --no-verify-jwt
 ```
+
+Die Edge Function fuer Aufgabenerinnerungen liegt hier:
+
+```text
+supabase/functions/send-task-reminders/index.ts
+```
+
+Deploy und Cron-Setup sind in `docs/24-push-reminder-dispatch.md` dokumentiert. Sie nutzt `HOMELY_REMINDER_SECRET`, ruft `claim_due_task_reminders` auf, sendet ueber Expo Push und schreibt den Versandstatus nach `notification_log`.
 
 Nach der Migration kann dieser Smoke-Test im Supabase SQL Editor ausgefuehrt werden:
 

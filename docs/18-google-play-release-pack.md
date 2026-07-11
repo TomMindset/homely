@@ -120,6 +120,7 @@ Vor Production:
 - Rollen testen: Gruender, Verwalter, Mitglied.
 - Automatischen Mehrkonto-Live-Check aus `docs/12-sync-testplan.md` ausfuehren.
 - Push unter `Mehr > Konto > Push` aktivieren, Android-Berechtigung pruefen und Token in Supabase kontrollieren.
+- Serverseitige Aufgabenerinnerung mit Edge Function `send-task-reminders`, Cron und `notification_log` pruefen.
 - Push wieder deaktivieren und pruefen, dass keine aktiven Tokens fuer das Konto verbleiben.
 - Mitglied darf Aufgaben erledigen und fremde Aufgaben uebernehmen, aber nicht verwalten.
 - Verwalter darf Aufgaben, Essensplan und Zuordnungen verwalten.
@@ -166,3 +167,5 @@ $env:EAS_BUILD_NO_EXPO_GO_WARNING='1'
 - Google Play Console Help: Preview assets: https://support.google.com/googleplay/android-developer/answer/9866151
 - Android Developers: Target API level requirement: https://developer.android.com/google/play/requirements/target-sdk
 - Expo Docs: Push notifications overview: https://docs.expo.dev/push-notifications/overview/
+- Expo Docs: Send notifications with Expo Push Service: https://docs.expo.dev/push-notifications/sending-notifications/
+- Supabase Docs: Scheduling Edge Functions: https://supabase.com/docs/guides/functions/schedule-functions
