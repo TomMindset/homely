@@ -464,7 +464,9 @@ check("professional MVP UI gates are wired", () => {
   assert(tasks.includes("Vorlagen wiederherstellen"), "Tasks screen should expose default template restore");
   assert(plannerState.includes("activateTaskPackage") && tasks.includes("Musteraufgabenpakete"), "Tasks should allow task packages after onboarding");
   assert(tasks.includes("LongtermTasksOverview") && tasks.includes("Langfristig"), "Tasks screen should include a long-term overview");
+  assert(app.includes("assignments={planner.assignments}") && tasks.includes("LongtermTasksOverview"), "Tasks long-term view should receive the full assignment plan");
   assert(tasks.includes("Zuordnung in KW"), "Task editing should expose assignment controls");
+  assert(tasks.includes("buildFairAssignmentPlan") && tasks.includes("Fair verteilen"), "Task editing should offer fair assignment suggestions");
   assert(tasks.includes("taskEditorCard"), "Task editing should use a dedicated full-width editor card");
   assert(tasks.includes("templateSummary") && tasks.includes("templateActions"), "Task rows should separate summary and actions to avoid narrow overflow");
   assert(meals.includes("mealInfoRow"), "Meal rows should separate info and actions to avoid narrow overflow");

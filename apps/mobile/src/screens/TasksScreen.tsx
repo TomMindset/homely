@@ -24,6 +24,56 @@ type TaskUpdateOptions = {
   reminderTime?: string;
 };
 
+type FairAssignmentSuggestion = {
+  assignmentId: string;
+  memberId: string;
+  memberName: string;
+  day: DayName;
+  beforeUnits: number;
+  projectedUnits: number;
+};
+
+function buildFairAssignmentPlan(
+  taskAssignments: Assignment[],
+  weekAssignments: Assignment[],
+  tasks: TaskTemplate[],
+  members: Member[],
+  task: TaskTemplate,
+): FairAssignmentSuggestion[] {
+  if (!taskAssignments.length || !members.length) return [];
+
+  const taskById = new Map(tasks.map((item) => [item.id, item]));
+  const workload = new Map(members.map((member) => [member.id, 0]));
+  weekAssignments
+    .filter((assignment) => assignment.taskId !== task.id)
+    .forEach((assignment) => {
+      const assignmentTask = taskById.get(assignment.taskId);
+      if (!assignmentTask || !workload.has(assignment.memberId)) return;
+      workload.set(assignment.memberId, (workload.get(assignment.memberId) ?? 0) + assignmentTask.effortUnits);
+    });
+
+  return [...taskAssignments]
+    .sort((first, second) => first.dayIndex - second.dayIndex)
+    .map((assignment) => {
+      const suggestedMember = [...members].sort((first, second) => {
+        const unitDelta = (workload.get(first.id) ?? 0) - (workload.get(second.id) ?? 0);
+        if (unitDelta !== 0) return unitDelta;
+        return first.name.localeCompare(second.name);
+      })[0];
+      const beforeUnits = workload.get(suggestedMember.id) ?? 0;
+      const projectedUnits = beforeUnits + task.effortUnits;
+      workload.set(suggestedMember.id, projectedUnits);
+      return {
+        assignmentId: assignment.id,
+        memberId: suggestedMember.id,
+        memberName: suggestedMember.name,
+        day: assignment.day,
+        beforeUnits,
+        projectedUnits,
+      };
+    });
+}
+
 export function TasksScreen({
   tasks,
   darkMode,
@@ -271,6 +321,8 @@ export function TasksScreen({
             darkMode={darkMode}
             canManagePlan={canManagePlan}
             assignments={selectedWeekAssignments.filter((assignment) => assignment.taskId === task.id)}
+            weekAssignments={selectedWeekAssignments}
+            tasks={tasks}
             members={members}
             selectedWeek={selectedWeek}
             updateTask={updateTask}
@@ -381,6 +433,8 @@ function TaskTemplateEditor({
   darkMode,
   canManagePlan,
   assignments,
+  weekAssignments,
+  tasks,
   members,
   selectedWeek,
   updateTask,
@@ -392,6 +446,8 @@ function TaskTemplateEditor({
   darkMode: boolean;
   canManagePlan: boolean;
   assignments: Assignment[];
+  weekAssignments: Assignment[];
+  tasks: TaskTemplate[];
   members: Member[];
   selectedWeek: number;
   updateTask: (
@@ -412,6 +468,11 @@ function TaskTemplateEditor({
   const [startWeek, setStartWeek] = useState(String(task.recurrenceStartWeek || 1));
   const [reminderOptionId, setReminderOptionId] = useState<ReminderOptionId>(getReminderOptionId(task));
   const [reminderTime, setReminderTime] = useState(task.reminderTime || "18:00");
+  const fairAssignmentPlan = buildFairAssignmentPlan(assignments, weekAssignments, tasks, members, task);
+  const fairAssignmentChanges = fairAssignmentPlan.filter((suggestion) => {
+    const assignment = assignments.find((item) => item.id === suggestion.assignmentId);
+    return assignment?.memberId !== suggestion.memberId;
+  });
 
   useEffect(() => {
     if (!editing) {
@@ -469,6 +530,25 @@ function TaskTemplateEditor({
       { text: "Abbrechen", style: "cancel" },
       { text: "Loeschen", style: "destructive", onPress: () => deleteTask(task.id) },
     ]);
+  }
+
+  function confirmApplyFairAssignmentPlan() {
+    if (!fairAssignmentChanges.length) {
+      Alert.alert("Schon fair verteilt", "Die aktuelle Zuordnung passt bereits zum Fairness-Vorschlag fuer diese Woche.");
+      return;
+    }
+
+    Alert.alert(
+      "Fair verteilen?",
+      `Homely passt ${fairAssignmentChanges.length} Zuordnung(en) in KW ${selectedWeek} an. Du kannst danach weiterhin jeden Tag manuell aendern.`,
+      [
+        { text: "Abbrechen", style: "cancel" },
+        {
+          text: "Anwenden",
+          onPress: () => fairAssignmentChanges.forEach((suggestion) => updateAssignmentMember(suggestion.assignmentId, suggestion.memberId)),
+        },
+      ],
+    );
   }
 
   if (editing) {
@@ -553,6 +633,42 @@ function TaskTemplateEditor({
         {!!assignments.length && (
           <View style={styles.editorRow}>
             <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Zuordnung in KW {selectedWeek}</Text>
+            {!!fairAssignmentPlan.length && canManagePlan && (
+              <View style={[styles.fairAssignBox, darkMode && styles.rowDark, themed.soft]}>
+                <View style={styles.scoreHeader}>
+                  <View style={styles.taskTextBox}>
+                    <Text style={[styles.taskTitle, themed.text, darkMode && styles.textDark]}>Fair verteilen</Text>
+                    <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+                      Vorschlag nach aktueller Wochenlast, ohne diese Aufgabe doppelt zu zaehlen.
+                    </Text>
+                  </View>
+                  <Text style={[styles.readinessBadge, themed.muted, darkMode && styles.mutedDark]}>
+                    {fairAssignmentChanges.length ? `${fairAssignmentChanges.length} offen` : "passt"}
+                  </Text>
+                </View>
+                <View style={styles.fairAssignPreview}>
+                  {fairAssignmentPlan.slice(0, 4).map((suggestion) => (
+                    <View key={suggestion.assignmentId} style={[styles.fairAssignChip, themed.card, darkMode && styles.rowDark]}>
+                      <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>{suggestion.day.slice(0, 2)}</Text>
+                      <Text style={[styles.taskTitle, themed.text, darkMode && styles.textDark]}>{suggestion.memberName}</Text>
+                      <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+                        {`${formatUnits(suggestion.beforeUnits)} -> ${formatUnits(suggestion.projectedUnits)}`}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+                <TouchableOpacity
+                  style={[styles.secondaryActionFull, themed.card, !fairAssignmentChanges.length && styles.disabledButton]}
+                  disabled={!fairAssignmentChanges.length}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${task.title} fair verteilen`}
+                  accessibilityState={{ disabled: !fairAssignmentChanges.length }}
+                  onPress={confirmApplyFairAssignmentPlan}
+                >
+                  <Text style={[styles.secondaryActionText, themed.muted]}>Vorschlag anwenden</Text>
+                </TouchableOpacity>
+              </View>
+            )}
             {assignments.map((assignment) => {
               const assignedMember = members.find((member) => member.id === assignment.memberId);
               return (

@@ -46,7 +46,9 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 - Fairness-Zuordnung auf eine andere Person wird remote gespeichert.
 - Aufgabe neu anlegen erscheint nach `Plan laden` weiterhin.
 - Aufgabe bearbeiten speichert Titel, Punkte und Wiederholung.
+- Beim Bearbeiten zeigt `Fair verteilen` einen bestaetigungspflichtigen Vorschlag nach aktueller Wochenlast.
 - Aufgabe loeschen verschwindet nach `Plan laden`.
+- Aufgaben-Langzeituebersicht zeigt kommende Wochen und nicht nur die aktuelle KW.
 
 ## Essensplan
 

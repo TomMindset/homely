@@ -38,6 +38,8 @@ Ziel: Homely soll nicht nur Aufgaben verwalten, sondern Alltagsstress reduzieren
 - Scoring-Basis: Soll-Punkte, Plan-Punkte, Ist-Punkte, Historie, Rollenfaehigkeit und Wiederholung.
 - Vorschlaege muessen erklaerbar sein: warum diese Aufgabe zu dieser Person passt.
 - Nutzer bestaetigen Vorschlaege vor dem Speichern.
+- Aufgabenbearbeitung zeigt pro Aufgabe einen `Fair verteilen`-Vorschlag fuer die gewaehlte KW.
+- Der Vorschlag berechnet die niedrigste aktuelle Planlast ohne die bearbeitete Aufgabe doppelt zu zaehlen.
 
 ## 5. Fairness als Kernversprechen
 
@@ -50,6 +52,7 @@ Ziel: Homely soll nicht nur Aufgaben verwalten, sondern Alltagsstress reduzieren
 ## 6. Kalender- und Jahresmodus
 
 - Homely braucht Planung ueber die aktuelle Woche hinaus.
+- Aufgaben-Langzeituebersicht zeigt die kommenden 12 Wochen aus dem vollstaendigen Plan.
 - Wiederholungen: taeglich, Wochentage, alle X Wochen, monatlich, jaehrlich.
 - Besonderheiten: Urlaub, Ferien, saisonale Aufgaben, Muelltermine.
 - UX-Regel: Tagesansicht bleibt leicht, Kalender ist ein Verwalter-Werkzeug.
