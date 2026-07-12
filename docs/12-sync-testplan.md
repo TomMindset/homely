@@ -83,6 +83,7 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 - Migration `0009_push_notifications.sql` ist in Supabase ausgefuehrt.
 - Migration `0010_task_reminder_dispatch.sql` ist in Supabase ausgefuehrt.
 - Migration `0011_notification_preference_controls.sql` ist in Supabase ausgefuehrt.
+- Migration `0012_notification_dispatch_expansion.sql` ist in Supabase ausgefuehrt.
 - Edge Function `send-task-reminders` ist deployed und mit `HOMELY_REMINDER_SECRET` geschuetzt.
 - Supabase Cron ruft `send-task-reminders` regelmaessig auf.
 - In der installierten Preview-/Play-Test-App unter `Mehr > Konto > Push` `Aktivieren` ausfuehren.
@@ -94,6 +95,8 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 - Supabase enthaelt fuer den eingeloggten Nutzer einen aktiven Eintrag in `push_tokens`.
 - Aufgabe mit Erinnerung im naechsten Zeitfenster erzeugt einen Eintrag in `notification_log`.
 - Aufgabe mit Erinnerung innerhalb der Ruhezeit wird im Claim auf das Ende der Ruhezeit verschoben.
+- Eine eigene ueberfaellige Aufgabe erzeugt hoechstens einmal taeglich einen `task_overdue`-Eintrag in `notification_log`.
+- Ein Gruender/Verwalter mit aktivem Haushaltsstatus erzeugt hoechstens einmal taeglich einen `household_summary`-Eintrag in `notification_log`.
 - `notification_log.status` wechselt nach Versand auf `sent` oder bei Problemen auf `failed`.
 - `Push deaktivieren` setzt die Geraete des Nutzers auf inaktiv und schaltet Preferences aus.
 - Zweites Konto registriert einen eigenen Push-Token, ohne Tokens des Gruenders sehen oder veraendern zu koennen.

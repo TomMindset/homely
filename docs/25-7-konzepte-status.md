@@ -12,11 +12,13 @@ Erfuellt:
 - Die App hat eine Testbenachrichtigung unter `Mehr > Konto > Push`.
 - Ruhezeiten sind in der App steuerbar und werden serverseitig beim Claim faelliger Aufgabenerinnerungen beruecksichtigt.
 - Nutzer koennen Aufgaben-Erinnerungen, Aenderungshinweise, ueberfaellige Aufgaben und Haushaltsstatus getrennt aktivieren.
+- Ueberfaellig-Erinnerungen sind als taegliche Zusammenfassung vorbereitet.
+- Haushaltsstatus fuer Verwalter und Gruender ist als eigener Dispatch-Fall vorbereitet.
 
 Offen:
 
-- Ueberfaellig-Erinnerungen muessen als eigener Versandfall umgesetzt werden.
-- Haushaltsstatus fuer Verwalter ist als Preference vorbereitet, aber noch nicht als eigener Push-Dispatch umgesetzt.
+- Migration `0012_notification_dispatch_expansion.sql` muss in Supabase ausgefuehrt werden.
+- Edge Function `send-task-reminders` muss nach Migration `0012` neu deployed werden.
 - Eine Tagesuebersicht, z. B. morgens `Heute stehen 3 Aufgaben an`, ist noch zu konzipieren.
 - Echter Samsung-/Play-Test fuer Zustellung, Token, Ruhezeiten und keine doppelten Erinnerungen steht aus.
 
@@ -98,6 +100,7 @@ Offen:
 - Wiederholungen `alle X Wochen`, monatlich und jaehrlich fehlen noch als echte Planlogik.
 - Urlaub, Ferien, saisonale Aufgaben und Muelltermine fehlen noch.
 - Langfristige Planung braucht spaeter Filter nach Person, Aufgabe und Haushalt.
+- Optionale Erweiterung ist konzipiert: Muelltermine als Terminserien, Urlaub/Ferien als Sperrzeiten mit Planverschiebung oder Pausierung.
 
 ## 7. Polierte Details: gut unterwegs
 
@@ -118,8 +121,8 @@ Offen:
 
 ## Aktualisierte naechste Reihenfolge
 
-1. Geraetetest mit aktuellem Stand: Heute, Aufgaben, Fairness, Essen, Mehr, Push-Test und Sync.
-2. Ueberfaellig- und Haushaltsstatus-Push als echte Dispatch-Faelle umsetzen.
+1. Migration `0012_notification_dispatch_expansion.sql` ausfuehren und `send-task-reminders` neu deployen.
+2. Geraetetest mit aktuellem Stand: Heute, Aufgaben, Fairness, Essen, Mehr, Push-Test, Ueberfaellig-Push, Haushaltsstatus und Sync.
 3. Heute weiter gruppieren: `Jetzt wichtig`, `Spaeter heute`, `Erledigt`.
 4. Fairness visualisieren: Balken, Wochenverlauf, Danke-Moment.
 5. Kalenderlogik erweitern: alle X Wochen, monatlich, jaehrlich.

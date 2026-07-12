@@ -6,16 +6,22 @@ const corsHeaders = {
   "access-control-allow-methods": "POST, OPTIONS",
 };
 
-type ReminderClaim = {
+type NotificationClaim = {
   log_id: string;
   user_id: string;
   household_id: string;
   household_name: string;
-  assignment_id: string;
-  task_id: string;
-  task_title: string;
+  assignment_id?: string | null;
+  task_id?: string | null;
+  task_title?: string | null;
   member_name: string;
   due_at: string;
+  notification_type?: "task_reminder" | "task_overdue" | "household_summary";
+  notification_key?: string | null;
+  open_count?: number | null;
+  done_count?: number | null;
+  overdue_count?: number | null;
+  oldest_due_date?: string | null;
 };
 
 type PushToken = {
@@ -84,24 +90,72 @@ function getIsoWindow(body: Record<string, unknown>) {
   };
 }
 
-function reminderBody(claim: ReminderClaim) {
-  const dayPrefix = new Date(claim.due_at).toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "2-digit" });
-  return `${claim.member_name}: ${claim.task_title} ist faellig (${dayPrefix}).`;
+function getBoolean(value: unknown, fallback: boolean) {
+  return typeof value === "boolean" ? value : fallback;
 }
 
-function buildExpoMessage(claim: ReminderClaim, token: PushToken) {
+function plural(count: number, singular: string, pluralLabel: string) {
+  return count === 1 ? singular : pluralLabel;
+}
+
+function reminderBody(claim: NotificationClaim) {
+  const dayPrefix = new Date(claim.due_at).toLocaleDateString("de-DE", { weekday: "long", day: "2-digit", month: "2-digit" });
+  return `${claim.member_name}: ${claim.task_title ?? "Deine Aufgabe"} ist faellig (${dayPrefix}).`;
+}
+
+function overdueBody(claim: NotificationClaim) {
+  const count = Math.max(1, claim.overdue_count ?? 1);
+  const oldestPrefix = claim.oldest_due_date
+    ? ` Seit ${new Date(`${claim.oldest_due_date}T12:00:00`).toLocaleDateString("de-DE", { day: "2-digit", month: "2-digit" })} offen.`
+    : "";
+  return `${count} ${plural(count, "Aufgabe ist", "Aufgaben sind")} in ${claim.household_name} ueberfaellig.${oldestPrefix}`;
+}
+
+function householdSummaryBody(claim: NotificationClaim) {
+  const openCount = Math.max(0, claim.open_count ?? 0);
+  const doneCount = Math.max(0, claim.done_count ?? 0);
+  const overdueCount = Math.max(0, claim.overdue_count ?? 0);
+  const overdueText = overdueCount > 0 ? ` Davon ${overdueCount} ueberfaellig.` : "";
+  return `${claim.household_name}: ${doneCount} erledigt, ${openCount} offen.${overdueText}`;
+}
+
+function notificationTitle(claim: NotificationClaim) {
+  switch (claim.notification_type ?? "task_reminder") {
+    case "task_overdue":
+      return "Homely: noch offen";
+    case "household_summary":
+      return "Homely Haushaltsstatus";
+    case "task_reminder":
+    default:
+      return "Homely Erinnerung";
+  }
+}
+
+function notificationBody(claim: NotificationClaim) {
+  switch (claim.notification_type ?? "task_reminder") {
+    case "task_overdue":
+      return overdueBody(claim);
+    case "household_summary":
+      return householdSummaryBody(claim);
+    case "task_reminder":
+    default:
+      return reminderBody(claim);
+  }
+}
+
+function buildExpoMessage(claim: NotificationClaim, token: PushToken) {
   return {
     to: token.expo_push_token,
-    title: "Homely Erinnerung",
-    body: reminderBody(claim),
+    title: notificationTitle(claim),
+    body: notificationBody(claim),
     sound: "default",
     channelId: "task-reminders",
     data: {
-      type: "task_reminder",
+      type: claim.notification_type ?? "task_reminder",
       logId: claim.log_id,
       householdId: claim.household_id,
-      assignmentId: claim.assignment_id,
-      taskId: claim.task_id,
+      assignmentId: claim.assignment_id ?? null,
+      taskId: claim.task_id ?? null,
     },
   };
 }
@@ -182,6 +236,25 @@ async function sendExpoChunks(adminClient: ReturnType<typeof createClient>, item
   return results;
 }
 
+async function claimRpc(
+  adminClient: ReturnType<typeof createClient>,
+  name: string,
+  window: { start: string; end: string; limit: number },
+  defaults: Partial<NotificationClaim> = {},
+) {
+  const { data, error } = await adminClient.rpc(name, {
+    target_window_start: window.start,
+    target_window_end: window.end,
+    target_max_items: window.limit,
+  });
+
+  if (error) {
+    throw new Error(`${name}: ${error.message}`);
+  }
+
+  return ((data ?? []) as NotificationClaim[]).map((claim) => ({ ...defaults, ...claim }));
+}
+
 Deno.serve(async (request) => {
   if (request.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
@@ -215,23 +288,35 @@ Deno.serve(async (request) => {
     auth: { persistSession: false },
   });
 
-  const { data: claims, error: claimError } = await adminClient.rpc("claim_due_task_reminders", {
-    target_window_start: window.start,
-    target_window_end: window.end,
-    target_max_items: window.limit,
-  });
+  const includeTaskReminders = getBoolean(requestBody.taskReminders, true);
+  const includeOverdue = getBoolean(requestBody.overdueReminders, true);
+  const includeHouseholdSummary = getBoolean(requestBody.householdSummary, true);
 
-  if (claimError) {
-    console.error("send-task-reminders claim failed", claimError);
-    return jsonResponse(500, { ok: false, message: claimError.message });
+  let notificationClaims: NotificationClaim[] = [];
+  try {
+    const claimGroups = await Promise.all([
+      includeTaskReminders
+        ? claimRpc(adminClient, "claim_due_task_reminders", window, { notification_type: "task_reminder" })
+        : Promise.resolve([]),
+      includeOverdue
+        ? claimRpc(adminClient, "claim_overdue_task_summaries", window, { notification_type: "task_overdue" })
+        : Promise.resolve([]),
+      includeHouseholdSummary
+        ? claimRpc(adminClient, "claim_household_status_summaries", window, { notification_type: "household_summary" })
+        : Promise.resolve([]),
+    ]);
+    notificationClaims = claimGroups.flat();
+  } catch (error) {
+    const message = error instanceof Error ? error.message : "Notification claim failed";
+    console.error("send-task-reminders claim failed", message);
+    return jsonResponse(500, { ok: false, message });
   }
 
-  const reminderClaims = (claims ?? []) as ReminderClaim[];
-  if (!reminderClaims.length) {
-    return jsonResponse(200, { ok: true, message: "No due task reminders.", claimed: 0, sent: 0, failed: 0 });
+  if (!notificationClaims.length) {
+    return jsonResponse(200, { ok: true, message: "No due notifications.", claimed: 0, sent: 0, failed: 0 });
   }
 
-  const userIds = [...new Set(reminderClaims.map((claim) => claim.user_id))];
+  const userIds = [...new Set(notificationClaims.map((claim) => claim.user_id))];
   const { data: tokenRows, error: tokenError } = await adminClient
     .from("push_tokens")
     .select("id,user_id,expo_push_token")
@@ -240,7 +325,7 @@ Deno.serve(async (request) => {
 
   if (tokenError) {
     console.error("send-task-reminders tokens failed", tokenError);
-    await Promise.all(reminderClaims.map((claim) => updateLog(adminClient, claim.log_id, { okCount: 0, ticketIds: [], errors: [tokenError.message] })));
+    await Promise.all(notificationClaims.map((claim) => updateLog(adminClient, claim.log_id, { okCount: 0, ticketIds: [], errors: [tokenError.message] })));
     return jsonResponse(500, { ok: false, message: tokenError.message });
   }
 
@@ -251,7 +336,7 @@ Deno.serve(async (request) => {
 
   const expoItems: ExpoPushItem[] = [];
   await Promise.all(
-    reminderClaims.map(async (claim) => {
+    notificationClaims.map(async (claim) => {
       const tokens = tokensByUserId.get(claim.user_id) ?? [];
       if (!tokens.length) {
         await updateLog(adminClient, claim.log_id, { okCount: 0, ticketIds: [], errors: ["No active push token for user"] });
@@ -271,12 +356,18 @@ Deno.serve(async (request) => {
 
   const results = await sendExpoChunks(adminClient, expoItems, expoAccessToken);
   const sent = [...results.values()].filter((result) => result.okCount > 0).length;
-  const failed = reminderClaims.length - sent;
+  const failed = notificationClaims.length - sent;
+  const claimedByType = notificationClaims.reduce<Record<string, number>>((summary, claim) => {
+    const type = claim.notification_type ?? "task_reminder";
+    summary[type] = (summary[type] ?? 0) + 1;
+    return summary;
+  }, {});
 
   return jsonResponse(200, {
     ok: true,
-    message: `${sent} reminder(s) sent, ${failed} failed.`,
-    claimed: reminderClaims.length,
+    message: `${sent} notification(s) sent, ${failed} failed.`,
+    claimed: notificationClaims.length,
+    claimedByType,
     sent,
     failed,
   });

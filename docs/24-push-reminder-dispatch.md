@@ -9,6 +9,7 @@ Ziel: Homely erinnert serverseitig an faellige Aufgaben. Die App registriert Pus
 - Migrationen:
   - `supabase/migrations/0010_task_reminder_dispatch.sql`
   - `supabase/migrations/0011_notification_preference_controls.sql`
+  - `supabase/migrations/0012_notification_dispatch_expansion.sql`
 - Edge Function: `supabase/functions/send-task-reminders/index.ts`
 - Tabellen:
   - `push_tokens`
@@ -16,6 +17,8 @@ Ziel: Homely erinnert serverseitig an faellige Aufgaben. Die App registriert Pus
   - `notification_log`
 - RPC:
   - `claim_due_task_reminders(target_window_start, target_window_end, target_max_items)`
+  - `claim_overdue_task_summaries(target_window_start, target_window_end, target_max_items)`
+  - `claim_household_status_summaries(target_window_start, target_window_end, target_max_items)`
 - App-Steuerung:
   - Testbenachrichtigung
   - Aufgaben-Erinnerungen
@@ -28,10 +31,11 @@ Ziel: Homely erinnert serverseitig an faellige Aufgaben. Die App registriert Pus
 
 1. Migration `0010_task_reminder_dispatch.sql` im SQL Editor ausfuehren.
 2. Migration `0011_notification_preference_controls.sql` im SQL Editor ausfuehren.
-3. Edge Function deployen.
-4. Secret fuer Cron-Aufruf setzen.
-5. Cron Job anlegen.
-6. Auf Samsung Push aktivieren und Aufgabe mit Erinnerung in das naechste Zeitfenster legen.
+3. Migration `0012_notification_dispatch_expansion.sql` im SQL Editor ausfuehren.
+4. Edge Function deployen.
+5. Secret fuer Cron-Aufruf setzen.
+6. Cron Job anlegen.
+7. Auf Samsung Push aktivieren und Aufgabe mit Erinnerung in das naechste Zeitfenster legen.
 
 ## PowerShell Deploy
 
@@ -80,6 +84,8 @@ select cron.schedule(
 - Ruhezeiten speichern und nach `Status` erneut kontrollieren.
 - Eine Aufgabe mit Erinnerung `Am Tag` und Uhrzeit im naechsten 15-Minuten-Fenster anlegen.
 - Eine zweite Aufgabe innerhalb der Ruhezeit anlegen und pruefen, dass der Claim auf das Ende der Ruhezeit verschoben wird.
+- Eine offene Aufgabe aus einem vergangenen Datum behalten und pruefen, dass einmal taeglich eine zusammengefasste Ueberfaellig-Erinnerung entsteht.
+- Fuer einen Gruender/Verwalter `Haushaltsstatus` aktivieren und pruefen, dass einmal taeglich ein Status-Push mit erledigt/offen entsteht.
 - `Plan hochladen`, falls der Haushalt synchronisiert ist.
 - Cron abwarten oder Function manuell invoke.
 - `notification_log` pruefen:
@@ -87,6 +93,14 @@ select cron.schedule(
   - `sent`: Expo Push Ticket erhalten.
   - `failed`: kein Token oder Expo-Fehler.
 - Bei `DeviceNotRegistered` deaktiviert die Function den betroffenen Token.
+
+## Versandarten
+
+- `task_reminder`: einzelne Aufgabe zur geplanten Erinnerungszeit.
+- `task_overdue`: einmal taegliche Zusammenfassung ueberfaelliger eigener Aufgaben, standardmaessig 09:00 Uhr lokal.
+- `household_summary`: einmal taeglicher Haushaltsstatus fuer Gruender/Verwalter, standardmaessig 18:00 Uhr lokal.
+
+Alle Versandarten nutzen `notification_log`, `notification_key`, Opt-in, aktive Expo Push Tokens und Ruhezeiten. Dadurch sollen keine doppelten Pushs entstehen.
 
 ## Manuelles Invoke
 

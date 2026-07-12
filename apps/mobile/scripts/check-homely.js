@@ -356,6 +356,7 @@ check("push notification foundation is opt-in and RLS protected", () => {
 check("server-side task reminder dispatch is claim-logged and scheduled-ready", () => {
   const migration = read("supabase/migrations/0010_task_reminder_dispatch.sql");
   const preferenceMigration = read("supabase/migrations/0011_notification_preference_controls.sql");
+  const expansionMigration = read("supabase/migrations/0012_notification_dispatch_expansion.sql");
   const edgeFunction = read("supabase/functions/send-task-reminders/index.ts");
   const dispatchDoc = read("docs/24-push-reminder-dispatch.md");
   const databaseHealth = read("apps/mobile/src/services/databaseHealthService.ts");
@@ -367,8 +368,13 @@ check("server-side task reminder dispatch is claim-logged and scheduled-ready", 
   assert(edgeFunction.includes("x-homely-reminder-secret"), "Reminder function should require a scheduler secret");
   assert(edgeFunction.includes("DeviceNotRegistered"), "Reminder function should disable unregistered device tokens");
   assert(preferenceMigration.includes("quiet_hours_start") && preferenceMigration.includes("local_due_at"), "Reminder claims should respect quiet hours");
+  assert(expansionMigration.includes("notification_key"), "Expanded dispatch should add a reusable notification key");
+  assert(expansionMigration.includes("claim_overdue_task_summaries"), "Expanded dispatch should claim overdue summaries");
+  assert(expansionMigration.includes("claim_household_status_summaries"), "Expanded dispatch should claim household status summaries");
+  assert(edgeFunction.includes("claim_overdue_task_summaries"), "Edge function should send overdue summaries");
+  assert(edgeFunction.includes("claim_household_status_summaries"), "Edge function should send household summaries");
   assert(databaseHealth.includes("notification_log"), "Database health check should include notification log table");
-  assert(dispatchDoc.includes("pg_cron") && dispatchDoc.includes("send-task-reminders"), "Reminder dispatch docs should describe Cron and deployment");
+  assert(dispatchDoc.includes("pg_cron") && dispatchDoc.includes("0012_notification_dispatch_expansion"), "Reminder dispatch docs should describe Cron and latest deployment");
 });
 
 check("member payload normalizes role, short code and soft-delete reset", () => {
@@ -535,6 +541,7 @@ check("Google Play release pack is prepared", () => {
 
 check("seven concept status reflects current implementation", () => {
   const status = read("docs/25-7-konzepte-status.md");
+  const calendarOptions = read("docs/26-kalender-optionen-muell-urlaub.md");
   [
     "Testbenachrichtigung",
     "Ruhezeiten",
@@ -547,6 +554,7 @@ check("seven concept status reflects current implementation", () => {
   ].forEach((item) => {
     assert(status.includes(item), `Seven concept status missing ${item}`);
   });
+  assert(calendarOptions.includes("Muelltermine") && calendarOptions.includes("Urlaub und Ferien"), "Calendar options should cover trash dates and vacations");
 });
 
 async function liveCheck(name, fn) {
