@@ -177,6 +177,8 @@ export default function App() {
               restoreDefaultTasks={planner.restoreDefaultTasks}
               activateTaskPackage={planner.activateTaskPackage}
               hiddenDefaultTaskCount={planner.hiddenDefaultTaskCount}
+              lastDeletedTaskTitle={planner.lastDeletedTaskTitle}
+              undoDeleteTask={planner.undoDeleteTask}
               assignments={planner.assignments}
               members={planner.members}
               selectedWeek={planner.selectedWeek}

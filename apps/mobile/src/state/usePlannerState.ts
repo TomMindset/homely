@@ -86,6 +86,12 @@ type SyncStatus = {
   message: string;
 };
 
+type DeletedTaskSnapshot = {
+  task: TaskTemplate;
+  assignments: Assignment[];
+  custom: boolean;
+};
+
 function summarizeAssignments(items: Assignment[], tasks: TaskTemplate[]): AssignmentSummary {
   return items.reduce<AssignmentSummary>(
     (summary, assignment) => {
@@ -260,6 +266,7 @@ export function usePlannerState() {
   const [taskOverrides, setTaskOverrides] = useState<Record<string, Partial<TaskTemplate>>>({});
   const [deletedTaskIds, setDeletedTaskIds] = useState<string[]>([]);
   const [customTasks, setCustomTasks] = useState<TaskTemplate[]>([]);
+  const [lastDeletedTask, setLastDeletedTask] = useState<DeletedTaskSnapshot | null>(null);
   const [mealOverrides, setMealOverrides] = useState<Record<string, Partial<MealPlanEntry>>>({});
   const [familyName, setFamilyNameState] = useState(defaultHouseholdName);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
@@ -619,10 +626,17 @@ export function usePlannerState() {
 
   function deleteTask(taskId: string) {
     if (!canManagePlan) return;
+    const taskToDelete = tasks.find((task) => task.id === taskId);
+    const deletedAssignments = assignments.filter((assignment) => assignment.taskId === taskId);
+    const custom = customTasks.some((task) => task.id === taskId);
+    if (taskToDelete) {
+      setLastDeletedTask({ task: taskToDelete, assignments: deletedAssignments, custom });
+    }
+
     if (activeRemoteHouseholdId) {
       runRemoteSync("Aufgabe", () => deleteRemoteTask({ householdId: activeRemoteHouseholdId, taskId }));
     }
-    if (customTasks.some((task) => task.id === taskId)) {
+    if (custom) {
       setCustomTasks((items) => {
         const updated = items.filter((task) => task.id !== taskId);
         setStoredItem(storageKeys.customTasks, JSON.stringify(updated)).catch(() => {});
@@ -641,6 +655,43 @@ export function usePlannerState() {
       saveAssignmentState(updated);
       return updated;
     });
+  }
+
+  function undoDeleteTask() {
+    if (!canManagePlan || !lastDeletedTask) return;
+    const snapshot = lastDeletedTask;
+
+    if (snapshot.custom) {
+      setCustomTasks((items) => {
+        const updated = items.some((task) => task.id === snapshot.task.id) ? items : [...items, snapshot.task];
+        setStoredItem(storageKeys.customTasks, JSON.stringify(updated)).catch(() => {});
+        return updated;
+      });
+    } else {
+      setDeletedTaskIds((items) => {
+        const updated = items.filter((taskId) => taskId !== snapshot.task.id);
+        setStoredItem(storageKeys.deletedTaskIds, JSON.stringify(updated)).catch(() => {});
+        return updated;
+      });
+    }
+
+    setAssignments((items) => {
+      const existingIds = new Set(items.map((assignment) => assignment.id));
+      const restoredAssignments = snapshot.assignments.filter((assignment) => !existingIds.has(assignment.id));
+      const updated = [...items, ...restoredAssignments];
+      saveAssignmentState(updated);
+      if (activeRemoteHouseholdId) {
+        runRemoteSync("Aufgabe", () =>
+          upsertRemoteTaskWithAssignments({
+            householdId: activeRemoteHouseholdId,
+            task: snapshot.task,
+            assignments: updated,
+          }),
+        );
+      }
+      return updated;
+    });
+    setLastDeletedTask(null);
   }
 
   function addMember(name: string, shortCode: string, role: string, color: string) {
@@ -1044,6 +1095,7 @@ export function usePlannerState() {
     setTaskOverrides({});
     setDeletedTaskIds([]);
     setCustomTasks([]);
+    setLastDeletedTask(null);
     setMealOverrides({});
     setFamilyNameState(defaultHouseholdName);
     setActiveMemberIdState("");
@@ -1083,6 +1135,7 @@ export function usePlannerState() {
     familyName,
     founderMemberId: founderMember?.id ?? "",
     hiddenDefaultTaskCount,
+    lastDeletedTaskTitle: lastDeletedTask?.task.title ?? "",
     meals,
     members,
     newTitle,
@@ -1123,6 +1176,7 @@ export function usePlannerState() {
     updateMeal,
     updateMember,
     updateTask,
+    undoDeleteTask,
     upcomingWeeks,
     view,
     visibleAssignments,

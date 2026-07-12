@@ -96,6 +96,8 @@ export function TasksScreen({
   restoreDefaultTasks,
   activateTaskPackage,
   hiddenDefaultTaskCount,
+  lastDeletedTaskTitle,
+  undoDeleteTask,
   assignments,
   members,
   selectedWeek,
@@ -122,6 +124,8 @@ export function TasksScreen({
   restoreDefaultTasks: () => void;
   activateTaskPackage: (taskPackageId: TaskPackageId) => void;
   hiddenDefaultTaskCount: number;
+  lastDeletedTaskTitle: string;
+  undoDeleteTask: () => void;
   assignments: Assignment[];
   members: Member[];
   selectedWeek: number;
@@ -186,6 +190,22 @@ export function TasksScreen({
             onPress={restoreDefaultTasks}
           >
             <Text style={[styles.secondaryActionText, themed.muted]}>Vorlagen wiederherstellen</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {!!lastDeletedTaskTitle && canManagePlan && (
+        <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
+          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Aufgabe geloescht</Text>
+          <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
+            {lastDeletedTaskTitle} wurde entfernt. Du kannst die Aufgabe inklusive Zuordnungen direkt wiederherstellen.
+          </Text>
+          <TouchableOpacity
+            style={[styles.secondaryActionFull, themed.soft]}
+            accessibilityRole="button"
+            accessibilityLabel="Aufgabenloeschung rueckgaengig machen"
+            onPress={undoDeleteTask}
+          >
+            <Text style={[styles.secondaryActionText, themed.muted]}>Rueckgaengig</Text>
           </TouchableOpacity>
         </View>
       )}

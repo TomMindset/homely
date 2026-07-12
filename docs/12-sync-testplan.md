@@ -48,6 +48,7 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 - Aufgabe bearbeiten speichert Titel, Punkte und Wiederholung.
 - Beim Bearbeiten zeigt `Fair verteilen` einen bestaetigungspflichtigen Vorschlag nach aktueller Wochenlast.
 - Aufgabe loeschen verschwindet nach `Plan laden`.
+- Direkt nach dem Loeschen kann `Rueckgaengig` die Aufgabe inklusive Zuordnungen wiederherstellen.
 - Aufgaben-Langzeituebersicht zeigt kommende Wochen und nicht nur die aktuelle KW.
 
 ## Essensplan

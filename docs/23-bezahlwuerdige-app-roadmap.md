@@ -59,7 +59,7 @@ Ziel: Homely soll nicht nur Aufgaben verwalten, sondern Alltagsstress reduzieren
 
 ## 7. Polierte Details
 
-- Undo nach Loeschen.
+- Undo nach Aufgaben-Loeschen ist vorhanden und stellt Zuordnungen wieder her.
 - Lade-, Fehler- und Leerzustaende fuer alle Hauptflows.
 - Offline-/Sync-Konflikte verstaendlich erklaeren.
 - Keine Textueberlaeufe auf Samsung-Groessen.
