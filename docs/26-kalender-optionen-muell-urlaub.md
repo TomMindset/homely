@@ -59,7 +59,7 @@ UX:
 
 ## MVP-Reihenfolge
 
-1. Wiederholungen `alle X Wochen`, monatlich und jaehrlich fuer normale Aufgaben.
+1. Wiederholungen `alle X Wochen`, monatlich und jaehrlich fuer normale Aufgaben: umgesetzt fuer eigene Aufgaben.
 2. Manuelle Kalenderereignisse fuer Muell als Aufgabenserie.
 3. Urlaub/Ferien als reine Anzeige im Langzeitkalender.
 4. Urlaub/Ferien mit automatischer Aufgabenverschiebung.

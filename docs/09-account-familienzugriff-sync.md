@@ -78,10 +78,13 @@ Firebase bleibt eine starke Alternative, besonders wenn sehr schnelle Mobile-Int
 | title | text | Titel |
 | category | text | Kategorie |
 | effort_units | numeric | Punkte/Aufwand |
-| recurrence_type | text | once, daily, weekly_days |
+| recurrence_type | text | once, daily, weekly_days, every_x_weeks, monthly, yearly |
 | scheduled_days | text[] | Wochentage |
 | recurrence_start_year | integer nullable | Startjahr |
 | recurrence_start_week | integer nullable | Start-KW |
+| recurrence_interval_weeks | integer nullable | Abstand fuer alle-X-Wochen |
+| recurrence_day_of_month | integer nullable | Kalendertag fuer monatlich/jaehrlich |
+| recurrence_month | integer nullable | Monat fuer jaehrlich |
 | reminder_enabled | boolean | Erinnerung aktiv |
 | reminder_time | text | Uhrzeit |
 | reminder_lead_days | integer | 0 oder 1 |

@@ -28,6 +28,9 @@ export type TaskTemplate = {
   recurrenceLabel?: string;
   recurrenceStartYear?: number;
   recurrenceStartWeek?: number;
+  recurrenceIntervalWeeks?: number;
+  recurrenceDayOfMonth?: number;
+  recurrenceMonth?: number;
   reminderEnabled?: boolean;
   reminderTime?: string;
   reminderLeadDays?: number;

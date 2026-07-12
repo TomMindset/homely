@@ -26,8 +26,8 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 ## Supabase-Grundcheck
 
 - `Datenbank pruefen` zeigt keine fehlenden Tabellen.
-- `profiles`, `households`, `household_memberships`, `tasks`, `assignments`, `meals`, `household_invitations`, `push_tokens`, `notification_preferences` sind erreichbar.
-- Migrationen `0001` bis `0011` sind in Supabase ausgefuehrt.
+- `profiles`, `households`, `household_memberships`, `tasks`, `assignments`, `meals`, `household_invitations`, `push_tokens`, `notification_preferences`, `notification_log` sind erreichbar.
+- Migrationen `0001` bis `0013` sind in Supabase ausgefuehrt.
 - Edge Function `delete-account` ist deployed, bevor die Kontoloeschung getestet wird.
 - Redirect URL `homely://auth/callback` ist in Supabase erlaubt.
 - E-Mail-Bestaetigungslink oder Passwort-Reset-Link oeffnet Homely und setzt die Session.
@@ -49,6 +49,8 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 - Fairness-Zuordnung auf eine andere Person wird remote gespeichert.
 - Aufgabe neu anlegen erscheint nach `Plan laden` weiterhin.
 - Aufgabe bearbeiten speichert Titel, Punkte und Wiederholung.
+- Wiederholungen `alle X Wochen`, `monatlich` und `jaehrlich` erzeugen sichtbare Zukunftstermine in der Langzeituebersicht.
+- Nach `Plan hochladen` und `Plan laden` bleiben Intervall, Monat und Tag der Wiederholung erhalten.
 - `Uebliche Zustaendigkeit` setzt offene Termine einer Aufgabe ab der gewaehlten KW auf eine Standardperson.
 - Bereits erledigte Aufgaben werden durch `Uebliche Zustaendigkeit` nicht veraendert.
 - Beim Bearbeiten zeigt `Fair verteilen` einen bestaetigungspflichtigen Vorschlag nach aktueller Wochenlast.

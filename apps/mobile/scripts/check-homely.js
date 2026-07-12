@@ -117,6 +117,9 @@ function taskPayload(householdId, task) {
     scheduled_days: task.scheduledDays || [],
     recurrence_start_year: task.recurrenceStartYear ?? null,
     recurrence_start_week: task.recurrenceStartWeek ?? null,
+    recurrence_interval_weeks: task.recurrenceIntervalWeeks ?? null,
+    recurrence_day_of_month: task.recurrenceDayOfMonth ?? null,
+    recurrence_month: task.recurrenceMonth ?? null,
     reminder_enabled: !!task.reminderEnabled,
     reminder_time: task.reminderTime ?? null,
     reminder_lead_days: task.reminderLeadDays ?? 0,
@@ -195,6 +198,9 @@ const fixture = {
       scheduledDays: ["Montag", "Mittwoch"],
       recurrenceStartYear: 2026,
       recurrenceStartWeek: 27,
+      recurrenceIntervalWeeks: 2,
+      recurrenceDayOfMonth: 15,
+      recurrenceMonth: 7,
       reminderEnabled: true,
       reminderTime: "18:00",
       reminderLeadDays: 0,
@@ -240,6 +246,8 @@ check("required Supabase migrations exist", () => {
     "0009_push_notifications.sql",
     "0010_task_reminder_dispatch.sql",
     "0011_notification_preference_controls.sql",
+    "0012_notification_dispatch_expansion.sql",
+    "0013_task_recurrence_options.sql",
   ].forEach((file) => {
     assert(exists(`supabase/migrations/${file}`), `Missing migration ${file}`);
   });
@@ -389,7 +397,27 @@ check("task payload trims title and preserves scheduling fields", () => {
   assert(payload.title === "Spuelmaschine", "Task title should be trimmed");
   assert(payload.recurrence_type === "weekly_days", "Recurrence type should be preserved");
   assert(payload.scheduled_days.length === 2, "Scheduled days should be preserved");
+  assert(payload.recurrence_interval_weeks === 2, "Week interval should be preserved");
+  assert(payload.recurrence_day_of_month === 15, "Month day should be preserved");
+  assert(payload.recurrence_month === 7, "Yearly month should be preserved");
   assert(payload.reminder_enabled === true, "Reminder flag should be preserved");
+});
+
+check("advanced task recurrence stays wired through UI, state and sync", () => {
+  const constants = read("apps/mobile/src/constants/planner.ts");
+  const plannerState = read("apps/mobile/src/state/usePlannerState.ts");
+  const tasks = read("apps/mobile/src/screens/TasksScreen.tsx");
+  const syncService = read("apps/mobile/src/services/plannerSyncService.ts");
+  const migration = read("supabase/migrations/0013_task_recurrence_options.sql");
+  ["every_x_weeks", "monthly", "yearly"].forEach((type) => {
+    assert(constants.includes(type), `Missing recurrence option ${type}`);
+    assert(plannerState.includes(type), `Planner state missing recurrence handling for ${type}`);
+    assert(tasks.includes(type), `Tasks UI missing recurrence controls for ${type}`);
+  });
+  assert(plannerState.includes("normalizeWeekInterval") && plannerState.includes("recurrenceDayOfMonth"), "Planner should normalize advanced recurrence values");
+  assert(tasks.includes("RecurrenceDetailFields"), "Tasks UI should expose detail fields for advanced recurrence");
+  assert(syncService.includes("recurrence_interval_weeks") && syncService.includes("recurrence_day_of_month") && syncService.includes("recurrence_month"), "Sync should preserve advanced recurrence fields");
+  assert(migration.includes("recurrence_interval_weeks") && migration.includes("tasks_recurrence_month_range"), "Migration should add guarded recurrence columns");
 });
 
 check("assignment payload maps client ids to remote ids", () => {

@@ -168,6 +168,12 @@ export default function App() {
               setNewScheduleType={planner.setNewScheduleType}
               newTaskDays={planner.newTaskDays}
               toggleNewTaskDay={planner.toggleNewTaskDay}
+              newIntervalWeeks={planner.newIntervalWeeks}
+              setNewIntervalWeeks={planner.setNewIntervalWeeks}
+              newDayOfMonth={planner.newDayOfMonth}
+              setNewDayOfMonth={planner.setNewDayOfMonth}
+              newMonth={planner.newMonth}
+              setNewMonth={planner.setNewMonth}
               newReminderOptionId={planner.newReminderOptionId}
               setNewReminderOptionId={planner.setNewReminderOptionId}
               newReminderTime={planner.newReminderTime}

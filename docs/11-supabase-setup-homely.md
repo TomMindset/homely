@@ -101,6 +101,16 @@ supabase/migrations/0010_task_reminder_dispatch.sql
 
 Sie legt `notification_log` an und stellt `claim_due_task_reminders` bereit. Die RPC claimt faellige Erinnerungen atomar, damit Cron/Edge Function keine doppelten Pushs verschickt.
 
+Fuer Push-Ruhezeiten, erweiterte Benachrichtigungstypen und Aufgaben-Kalenderregeln danach ausfuehren:
+
+```text
+supabase/migrations/0011_notification_preference_controls.sql
+supabase/migrations/0012_notification_dispatch_expansion.sql
+supabase/migrations/0013_task_recurrence_options.sql
+```
+
+`0013` erweitert Aufgaben um `alle X Wochen`, monatliche und jaehrliche Regeln. Ohne diese Migration funktionieren die Regeln lokal, gehen aber beim Cloud-Sync verloren oder blockieren den Upload.
+
 Die Edge Function liegt hier:
 
 ```text
@@ -237,17 +247,18 @@ Naechste Schritte:
 6. Aufgaben-RPC-Migration `0005_assignment_client_key_rpcs.sql` ausfuehren.
 7. Haushaltsloesch-Migration `0006_delete_household_with_data.sql` ausfuehren.
 8. Kontoloesch-Migration `0007_account_deletion_support.sql` ausfuehren.
-9. Edge Function `delete-account` deployen.
-10. Optional Smoke-Test im SQL Editor ausfuehren.
-11. `.env` in `apps/mobile` mit Supabase-URL und Publishable Key erstellen.
-12. Konto in der App erstellen oder einloggen.
-13. In der App unter `Mehr > Konto` den Button `Datenbank pruefen` ausfuehren.
+9. Reparatur-/Push-/Reminder-Migrationen `0008` bis `0013` ausfuehren.
+10. Edge Functions `delete-account` und `send-task-reminders` deployen.
+11. Optional Smoke-Test im SQL Editor ausfuehren.
+12. `.env` in `apps/mobile` mit Supabase-URL und Publishable Key erstellen.
+13. Konto in der App erstellen oder einloggen.
+14. In der App unter `Mehr > Konto` den Button `Datenbank pruefen` ausfuehren.
    Ohne Login blockiert Row Level Security den Tabellencheck absichtlich.
-14. In `Mehr > Konto` den lokalen Haushalt per `Sync anlegen` in Supabase erstellen.
-15. Mit `Plan hochladen` lokale Mitglieder, Aufgaben, Punkte und Zuordnungen nach Supabase schreiben.
-16. Mit `Plan laden` pruefen, ob der Supabase-Stand wieder in die App uebernommen wird.
-17. Einladungen mit Code testen.
-18. Automatischen Aufgaben-Service ausbauen:
+15. In `Mehr > Konto` den lokalen Haushalt per `Sync anlegen` in Supabase erstellen.
+16. Mit `Plan hochladen` lokale Mitglieder, Aufgaben, Punkte und Zuordnungen nach Supabase schreiben.
+17. Mit `Plan laden` pruefen, ob der Supabase-Stand wieder in die App uebernommen wird.
+18. Einladungen mit Code testen.
+19. Automatischen Aufgaben-Service ausbauen:
    - Aufgabentitel, Punkte und Wiederholungen direkt remote speichern: erledigt
    - neue und geloeschte Aufgaben remote spiegeln: erledigt
    - Offline-first Cache erhalten

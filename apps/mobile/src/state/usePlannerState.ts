@@ -69,6 +69,9 @@ type TaskRuleUpdate = {
   recurrenceType?: NewTaskScheduleType;
   scheduledDays?: DayName[];
   recurrenceStartWeek?: number;
+  recurrenceIntervalWeeks?: number;
+  recurrenceDayOfMonth?: number;
+  recurrenceMonth?: number;
   reminderOptionId?: ReminderOptionId;
   reminderTime?: string;
 };
@@ -118,8 +121,50 @@ function getCustomTaskStartWeek(task: TaskTemplate, existingAssignments: Assignm
 
 function getCustomTaskScheduledDays(task: TaskTemplate, fallbackDay: DayName) {
   if (task.recurrenceType === "daily") return days;
-  if (task.recurrenceType === "weekly_days") return task.scheduledDays?.length ? task.scheduledDays : [fallbackDay];
+  if (task.recurrenceType === "weekly_days" || task.recurrenceType === "every_x_weeks") {
+    return task.scheduledDays?.length ? task.scheduledDays : [fallbackDay];
+  }
   return task.scheduledDays?.length ? task.scheduledDays : [fallbackDay];
+}
+
+function normalizeWeekInterval(value?: number) {
+  return Math.min(26, Math.max(1, Math.round(value || 2)));
+}
+
+function normalizeDayOfMonth(value?: number) {
+  return Math.min(31, Math.max(1, Math.round(value || 1)));
+}
+
+function normalizeMonth(value?: number) {
+  return Math.min(12, Math.max(1, Math.round(value || 1)));
+}
+
+function isRecurringCustomTask(task: TaskTemplate) {
+  return !!task.recurrenceType && task.recurrenceType !== "once";
+}
+
+function recurrenceLabelOptions(task: TaskTemplate, startWeek: number, fallbackDay: DayName) {
+  const fallbackDate = getDateForWeekDay(seedData.family.year, startWeek, fallbackDay);
+  return {
+    intervalWeeks: normalizeWeekInterval(task.recurrenceIntervalWeeks),
+    dayOfMonth: normalizeDayOfMonth(task.recurrenceDayOfMonth ?? fallbackDate.getUTCDate()),
+    month: normalizeMonth(task.recurrenceMonth ?? fallbackDate.getUTCMonth() + 1),
+  };
+}
+
+function buildAssignment(task: TaskTemplate, week: number, day: DayName, memberId: string): Assignment {
+  return {
+    id: `${task.id}-kw${week}-${days.indexOf(day) + 1}`,
+    year: seedData.family.year,
+    week,
+    date: getDateForWeekDay(seedData.family.year, week, day).toISOString().slice(0, 10),
+    taskId: task.id,
+    memberId,
+    day,
+    dayIndex: days.indexOf(day) + 1,
+    status: "open",
+    source: "custom",
+  };
 }
 
 function buildCustomTaskAssignments({
@@ -133,25 +178,38 @@ function buildCustomTaskAssignments({
   fallbackDay: DayName;
   memberId: string;
 }) {
+  const recurrenceType = task.recurrenceType || "once";
+  const availableWeeks = seedData.family.availableWeeks.filter((week) => week >= startWeek);
+
+  if (recurrenceType === "monthly" || recurrenceType === "yearly") {
+    const fallbackDate = getDateForWeekDay(seedData.family.year, startWeek, fallbackDay);
+    const targetDay = normalizeDayOfMonth(task.recurrenceDayOfMonth ?? fallbackDate.getUTCDate());
+    const targetMonth = normalizeMonth(task.recurrenceMonth ?? fallbackDate.getUTCMonth() + 1);
+
+    return availableWeeks.flatMap((week) =>
+      days
+        .map((day) => {
+          const date = getDateForWeekDay(seedData.family.year, week, day);
+          const matchesDay = date.getUTCDate() === targetDay;
+          const matchesMonth = recurrenceType === "monthly" || date.getUTCMonth() + 1 === targetMonth;
+          return matchesDay && matchesMonth ? buildAssignment(task, week, day, memberId) : null;
+        })
+        .filter((assignment): assignment is Assignment => !!assignment),
+    );
+  }
+
   const scheduledDays = getCustomTaskScheduledDays(task, fallbackDay);
-  const weeks =
-    task.recurrenceType === "daily" || task.recurrenceType === "weekly_days"
-      ? seedData.family.availableWeeks.filter((week) => week >= startWeek)
-      : [startWeek];
+  const weeks = (() => {
+    if (recurrenceType === "daily" || recurrenceType === "weekly_days") return availableWeeks;
+    if (recurrenceType === "every_x_weeks") {
+      const interval = normalizeWeekInterval(task.recurrenceIntervalWeeks);
+      return availableWeeks.filter((week) => (week - startWeek) % interval === 0);
+    }
+    return [startWeek];
+  })();
 
   return weeks.flatMap((week) =>
-    scheduledDays.map((day) => ({
-      id: `${task.id}-kw${week}-${days.indexOf(day) + 1}`,
-      year: seedData.family.year,
-      week,
-      date: getDateForWeekDay(seedData.family.year, week, day).toISOString().slice(0, 10),
-      taskId: task.id,
-      memberId,
-      day,
-      dayIndex: days.indexOf(day) + 1,
-      status: "open" as Assignment["status"],
-      source: "custom",
-    })),
+    scheduledDays.map((day) => buildAssignment(task, week, day, memberId)),
   );
 }
 
@@ -159,7 +217,7 @@ function ensureRecurringCustomAssignments(customTasks: TaskTemplate[], customAss
   const assignmentsById = new Map(customAssignments.map((assignment) => [assignment.id, assignment]));
 
   customTasks.forEach((task) => {
-    if (task.recurrenceType !== "daily" && task.recurrenceType !== "weekly_days") return;
+    if (!isRecurringCustomTask(task)) return;
 
     const taskAssignments = customAssignments.filter((assignment) => assignment.taskId === task.id);
     const firstAssignment = taskAssignments[0];
@@ -194,7 +252,14 @@ function replaceCustomTaskAssignments(assignments: Assignment[], task: TaskTempl
     memberId: existingTaskAssignments[0]?.memberId ?? fallbackMemberId,
   }).map((assignment) => {
     const existing = existingById.get(assignment.id);
-    return existing ? { ...assignment, status: existing.status, memberId: existing.memberId } : assignment;
+    return existing
+      ? {
+          ...assignment,
+          status: existing.status,
+          memberId: existing.memberId,
+          completedByMemberId: existing.completedByMemberId,
+        }
+      : assignment;
   });
 
   return [...assignments.filter((assignment) => assignment.taskId !== task.id), ...generatedAssignments];
@@ -252,8 +317,9 @@ function redistributeSeedAssignments(targetMembers: Member[]) {
 }
 
 export function usePlannerState() {
-  const current = getCurrentIsoWeek(new Date());
-  const currentDay = getDayName(new Date());
+  const today = new Date();
+  const current = getCurrentIsoWeek(today);
+  const currentDay = getDayName(today);
   const [view, setView] = useState<ViewId>("today");
   const [selectedWeek, setSelectedWeek] = useState(
     seedData.family.availableWeeks.includes(current.week) ? current.week : seedData.family.week,
@@ -275,6 +341,9 @@ export function usePlannerState() {
   const [newUnits, setNewUnits] = useState("1");
   const [newScheduleType, setNewScheduleType] = useState<NewTaskScheduleType>("once");
   const [newTaskDays, setNewTaskDays] = useState<DayName[]>([currentDay]);
+  const [newIntervalWeeks, setNewIntervalWeeks] = useState("2");
+  const [newDayOfMonth, setNewDayOfMonth] = useState(String(today.getDate()));
+  const [newMonth, setNewMonth] = useState(String(today.getMonth() + 1));
   const [newReminderOptionId, setNewReminderOptionId] = useState<ReminderOptionId>("none");
   const [newReminderTime, setNewReminderTime] = useState("18:00");
   const [darkMode, setDarkMode] = useState(false);
@@ -603,10 +672,15 @@ export function usePlannerState() {
             ...(ruleUpdate?.recurrenceType ? { recurrenceType: ruleUpdate.recurrenceType } : {}),
             ...(scheduledDays ? { scheduledDays } : {}),
             ...(ruleUpdate?.recurrenceStartWeek ? { recurrenceStartWeek: ruleUpdate.recurrenceStartWeek } : {}),
+            ...(ruleUpdate?.recurrenceIntervalWeeks !== undefined ? { recurrenceIntervalWeeks: normalizeWeekInterval(ruleUpdate.recurrenceIntervalWeeks) } : {}),
+            ...(ruleUpdate?.recurrenceDayOfMonth !== undefined ? { recurrenceDayOfMonth: normalizeDayOfMonth(ruleUpdate.recurrenceDayOfMonth) } : {}),
+            ...(ruleUpdate?.recurrenceMonth !== undefined ? { recurrenceMonth: normalizeMonth(ruleUpdate.recurrenceMonth) } : {}),
           };
+          const labelStartWeek = updatedTask.recurrenceStartWeek ?? selectedWeek;
           updatedTask.recurrenceLabel = scheduleLabel(
             (updatedTask.recurrenceType || "once") as NewTaskScheduleType,
             getCustomTaskScheduledDays(updatedTask, selectedDay),
+            recurrenceLabelOptions(updatedTask, labelStartWeek, selectedDay),
           );
           return updatedTask;
         });
@@ -1000,8 +1074,17 @@ export function usePlannerState() {
     const defaultMemberId = activeMember?.id ?? members[0]?.id;
     if (!newTitle.trim() || !Number.isFinite(units) || units <= 0 || !defaultMemberId) return;
     const scheduledDays =
-      newScheduleType === "daily" ? days : newScheduleType === "weekly_days" ? (newTaskDays.length ? newTaskDays : [selectedDay]) : [selectedDay];
+      newScheduleType === "daily"
+        ? days
+        : newScheduleType === "weekly_days" || newScheduleType === "every_x_weeks"
+          ? newTaskDays.length
+            ? newTaskDays
+            : [selectedDay]
+          : [selectedDay];
     const reminderOption = reminderOptions.find((option) => option.id === newReminderOptionId) ?? reminderOptions[0];
+    const recurrenceIntervalWeeks = normalizeWeekInterval(Number(newIntervalWeeks));
+    const recurrenceDayOfMonth = normalizeDayOfMonth(Number(newDayOfMonth));
+    const recurrenceMonth = normalizeMonth(Number(newMonth));
 
     const taskId = `custom-${Date.now()}`;
     const task: TaskTemplate = {
@@ -1012,9 +1095,16 @@ export function usePlannerState() {
       source: "custom",
       recurrenceType: newScheduleType,
       scheduledDays,
-      recurrenceLabel: scheduleLabel(newScheduleType, scheduledDays),
+      recurrenceLabel: scheduleLabel(newScheduleType, scheduledDays, {
+        intervalWeeks: recurrenceIntervalWeeks,
+        dayOfMonth: recurrenceDayOfMonth,
+        month: recurrenceMonth,
+      }),
       recurrenceStartYear: seedData.family.year,
       recurrenceStartWeek: selectedWeek,
+      recurrenceIntervalWeeks,
+      recurrenceDayOfMonth,
+      recurrenceMonth,
       reminderEnabled: reminderOption.enabled,
       reminderLeadDays: reminderOption.leadDays,
       reminderTime: newReminderTime.trim() || "18:00",
@@ -1052,6 +1142,9 @@ export function usePlannerState() {
     setNewUnits("1");
     setNewScheduleType("once");
     setNewTaskDays([selectedDay]);
+    setNewIntervalWeeks("2");
+    setNewDayOfMonth(String(new Date().getDate()));
+    setNewMonth(String(new Date().getMonth() + 1));
     setNewReminderOptionId("none");
     setNewReminderTime("18:00");
   }
@@ -1146,6 +1239,9 @@ export function usePlannerState() {
     setNewUnits("1");
     setNewScheduleType("once");
     setNewTaskDays([currentDay]);
+    setNewIntervalWeeks("2");
+    setNewDayOfMonth(String(new Date().getDate()));
+    setNewMonth(String(new Date().getMonth() + 1));
     setNewReminderOptionId("none");
     setNewReminderTime("18:00");
     setDarkMode(false);
@@ -1186,6 +1282,9 @@ export function usePlannerState() {
     newUnits,
     newScheduleType,
     newTaskDays,
+    newIntervalWeeks,
+    newDayOfMonth,
+    newMonth,
     newReminderOptionId,
     newReminderTime,
     onboardingComplete,
@@ -1203,6 +1302,9 @@ export function usePlannerState() {
     setNewTitle,
     setNewUnits,
     setNewScheduleType,
+    setNewIntervalWeeks,
+    setNewDayOfMonth,
+    setNewMonth,
     setNewReminderOptionId,
     setNewReminderTime,
     setSelectedDay,

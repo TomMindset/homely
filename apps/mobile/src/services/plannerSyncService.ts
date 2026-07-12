@@ -1,4 +1,5 @@
 import { Assignment, DayName, MealPlanEntry, Member, TaskTemplate } from "../utils/planner";
+import { scheduleLabel, type NewTaskScheduleType } from "../constants/planner";
 import { requireSupabase } from "./supabaseClient";
 
 export type PlannerSnapshot = {
@@ -42,6 +43,9 @@ type RemoteTaskRow = {
   scheduled_days: DayName[] | null;
   recurrence_start_year: number | null;
   recurrence_start_week: number | null;
+  recurrence_interval_weeks: number | null;
+  recurrence_day_of_month: number | null;
+  recurrence_month: number | null;
   reminder_enabled: boolean;
   reminder_time: string | null;
   reminder_lead_days: number;
@@ -114,6 +118,9 @@ function taskPayload(householdId: string, task: TaskTemplate) {
     scheduled_days: task.scheduledDays ?? [],
     recurrence_start_year: task.recurrenceStartYear ?? null,
     recurrence_start_week: task.recurrenceStartWeek ?? null,
+    recurrence_interval_weeks: task.recurrenceIntervalWeeks ?? null,
+    recurrence_day_of_month: task.recurrenceDayOfMonth ?? null,
+    recurrence_month: task.recurrenceMonth ?? null,
     reminder_enabled: !!task.reminderEnabled,
     reminder_time: task.reminderTime ?? null,
     reminder_lead_days: task.reminderLeadDays ?? 0,
@@ -476,7 +483,7 @@ export async function downloadPlannerSnapshot(householdId: string): Promise<Serv
     const { data: tasksData, error: tasksError } = await client
       .from("tasks")
       .select(
-        "id,title,category,effort_units,recurrence_type,scheduled_days,recurrence_start_year,recurrence_start_week,reminder_enabled,reminder_time,reminder_lead_days,client_key",
+        "id,title,category,effort_units,recurrence_type,scheduled_days,recurrence_start_year,recurrence_start_week,recurrence_interval_weeks,recurrence_day_of_month,recurrence_month,reminder_enabled,reminder_time,reminder_lead_days,client_key",
       )
       .eq("household_id", householdId)
       .is("deleted_at", null)
@@ -522,20 +529,32 @@ export async function downloadPlannerSnapshot(householdId: string): Promise<Serv
           color: member.color,
           source: "remote",
         })),
-        tasks: remoteTasks.map((task) => ({
-          id: task.client_key ?? task.id,
-          title: task.title,
-          category: task.category,
-          effortUnits: Number(task.effort_units),
-          source: "remote",
-          recurrenceType: task.recurrence_type,
-          scheduledDays: task.scheduled_days ?? [],
-          recurrenceStartYear: task.recurrence_start_year ?? undefined,
-          recurrenceStartWeek: task.recurrence_start_week ?? undefined,
-          reminderEnabled: task.reminder_enabled,
-          reminderTime: task.reminder_time ?? undefined,
-          reminderLeadDays: task.reminder_lead_days,
-        })),
+        tasks: remoteTasks.map((task) => {
+          const scheduledDays = task.scheduled_days ?? [];
+          const recurrenceType = (task.recurrence_type || "once") as NewTaskScheduleType;
+          return {
+            id: task.client_key ?? task.id,
+            title: task.title,
+            category: task.category,
+            effortUnits: Number(task.effort_units),
+            source: "remote",
+            recurrenceType,
+            scheduledDays,
+            recurrenceLabel: scheduleLabel(recurrenceType, scheduledDays, {
+              intervalWeeks: task.recurrence_interval_weeks ?? undefined,
+              dayOfMonth: task.recurrence_day_of_month ?? undefined,
+              month: task.recurrence_month ?? undefined,
+            }),
+            recurrenceStartYear: task.recurrence_start_year ?? undefined,
+            recurrenceStartWeek: task.recurrence_start_week ?? undefined,
+            recurrenceIntervalWeeks: task.recurrence_interval_weeks ?? undefined,
+            recurrenceDayOfMonth: task.recurrence_day_of_month ?? undefined,
+            recurrenceMonth: task.recurrence_month ?? undefined,
+            reminderEnabled: task.reminder_enabled,
+            reminderTime: task.reminder_time ?? undefined,
+            reminderLeadDays: task.reminder_lead_days,
+          };
+        }),
         assignments: remoteAssignments
           .map((assignment) => {
             const taskId = taskClientKeyById.get(assignment.task_id);

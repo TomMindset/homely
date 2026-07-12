@@ -20,6 +20,9 @@ type TaskUpdateOptions = {
   recurrenceType?: NewTaskScheduleType;
   scheduledDays?: DayName[];
   recurrenceStartWeek?: number;
+  recurrenceIntervalWeeks?: number;
+  recurrenceDayOfMonth?: number;
+  recurrenceMonth?: number;
   reminderOptionId?: ReminderOptionId;
   reminderTime?: string;
 };
@@ -74,6 +77,81 @@ function buildFairAssignmentPlan(
     });
 }
 
+function RecurrenceDetailFields({
+  scheduleType,
+  intervalWeeks,
+  setIntervalWeeks,
+  dayOfMonth,
+  setDayOfMonth,
+  month,
+  setMonth,
+  darkMode,
+  canManagePlan,
+}: {
+  scheduleType: NewTaskScheduleType;
+  intervalWeeks: string;
+  setIntervalWeeks: (value: string) => void;
+  dayOfMonth: string;
+  setDayOfMonth: (value: string) => void;
+  month: string;
+  setMonth: (value: string) => void;
+  darkMode: boolean;
+  canManagePlan: boolean;
+}) {
+  const themed = useThemeStyles(darkMode);
+  if (scheduleType !== "every_x_weeks" && scheduleType !== "monthly" && scheduleType !== "yearly") return null;
+
+  return (
+    <View style={styles.quietTimeRow}>
+      {scheduleType === "every_x_weeks" && (
+        <View style={styles.quietTimeField}>
+          <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Abstand in Wochen</Text>
+          <TextInput
+            style={[styles.input, themed.input, darkMode && styles.inputDark]}
+            value={intervalWeeks}
+            onChangeText={setIntervalWeeks}
+            keyboardType="numeric"
+            editable={canManagePlan}
+            accessibilityLabel="Abstand der Wiederholung in Wochen"
+            placeholder="z. B. 2"
+            placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
+          />
+        </View>
+      )}
+      {(scheduleType === "monthly" || scheduleType === "yearly") && (
+        <View style={styles.quietTimeField}>
+          <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Tag im Monat</Text>
+          <TextInput
+            style={[styles.input, themed.input, darkMode && styles.inputDark]}
+            value={dayOfMonth}
+            onChangeText={setDayOfMonth}
+            keyboardType="numeric"
+            editable={canManagePlan}
+            accessibilityLabel="Tag im Monat fuer Wiederholung"
+            placeholder="1-31"
+            placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
+          />
+        </View>
+      )}
+      {scheduleType === "yearly" && (
+        <View style={styles.quietTimeField}>
+          <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Monat</Text>
+          <TextInput
+            style={[styles.input, themed.input, darkMode && styles.inputDark]}
+            value={month}
+            onChangeText={setMonth}
+            keyboardType="numeric"
+            editable={canManagePlan}
+            accessibilityLabel="Monat fuer jaehrliche Wiederholung"
+            placeholder="1-12"
+            placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
+          />
+        </View>
+      )}
+    </View>
+  );
+}
+
 export function TasksScreen({
   tasks,
   darkMode,
@@ -85,6 +163,12 @@ export function TasksScreen({
   setNewScheduleType,
   newTaskDays,
   toggleNewTaskDay,
+  newIntervalWeeks,
+  setNewIntervalWeeks,
+  newDayOfMonth,
+  setNewDayOfMonth,
+  newMonth,
+  setNewMonth,
   newReminderOptionId,
   setNewReminderOptionId,
   newReminderTime,
@@ -114,6 +198,12 @@ export function TasksScreen({
   setNewScheduleType: (value: NewTaskScheduleType) => void;
   newTaskDays: DayName[];
   toggleNewTaskDay: (day: DayName) => void;
+  newIntervalWeeks: string;
+  setNewIntervalWeeks: (value: string) => void;
+  newDayOfMonth: string;
+  setNewDayOfMonth: (value: string) => void;
+  newMonth: string;
+  setNewMonth: (value: string) => void;
   newReminderOptionId: ReminderOptionId;
   setNewReminderOptionId: (value: ReminderOptionId) => void;
   newReminderTime: string;
@@ -289,7 +379,7 @@ export function TasksScreen({
           </TouchableOpacity>
         ))}
       </View>
-      {newScheduleType === "weekly_days" && (
+      {(newScheduleType === "weekly_days" || newScheduleType === "every_x_weeks") && (
         <View style={styles.dayToggleGrid}>
           {days.map((day) => {
             const active = newTaskDays.includes(day);
@@ -309,9 +399,20 @@ export function TasksScreen({
           })}
         </View>
       )}
+      <RecurrenceDetailFields
+        scheduleType={newScheduleType}
+        intervalWeeks={newIntervalWeeks}
+        setIntervalWeeks={setNewIntervalWeeks}
+        dayOfMonth={newDayOfMonth}
+        setDayOfMonth={setNewDayOfMonth}
+        month={newMonth}
+        setMonth={setNewMonth}
+        darkMode={darkMode}
+        canManagePlan={canManagePlan}
+      />
       {newScheduleType !== "once" && (
         <Text style={[styles.permissionHint, themed.muted, darkMode && styles.mutedDark]}>
-          Wird ab der aktuellen Kalenderwoche bis Jahresende geplant.
+          Wird ab der aktuellen Kalenderwoche fuer das laufende Jahr geplant.
         </Text>
       )}
       <ReminderControls
@@ -501,6 +602,9 @@ function TaskTemplateEditor({
   const [scheduleType, setScheduleType] = useState<NewTaskScheduleType>((task.recurrenceType as NewTaskScheduleType) || "once");
   const [scheduledDays, setScheduledDays] = useState<DayName[]>(task.scheduledDays?.length ? task.scheduledDays : [days[0]]);
   const [startWeek, setStartWeek] = useState(String(task.recurrenceStartWeek || 1));
+  const [intervalWeeks, setIntervalWeeks] = useState(String(task.recurrenceIntervalWeeks || 2));
+  const [dayOfMonth, setDayOfMonth] = useState(String(task.recurrenceDayOfMonth || 1));
+  const [month, setMonth] = useState(String(task.recurrenceMonth || 1));
   const [reminderOptionId, setReminderOptionId] = useState<ReminderOptionId>(getReminderOptionId(task));
   const [reminderTime, setReminderTime] = useState(task.reminderTime || "18:00");
   const fairAssignmentPlan = buildFairAssignmentPlan(assignments, weekAssignments, tasks, members, task);
@@ -526,12 +630,18 @@ function TaskTemplateEditor({
       setScheduleType((task.recurrenceType as NewTaskScheduleType) || "once");
       setScheduledDays(task.scheduledDays?.length ? task.scheduledDays : [days[0]]);
       setStartWeek(String(task.recurrenceStartWeek || 1));
+      setIntervalWeeks(String(task.recurrenceIntervalWeeks || 2));
+      setDayOfMonth(String(task.recurrenceDayOfMonth || 1));
+      setMonth(String(task.recurrenceMonth || 1));
       setReminderOptionId(getReminderOptionId(task));
       setReminderTime(task.reminderTime || "18:00");
     }
   }, [
     editing,
     task.effortUnits,
+    task.recurrenceDayOfMonth,
+    task.recurrenceIntervalWeeks,
+    task.recurrenceMonth,
     task.recurrenceStartWeek,
     task.recurrenceType,
     task.reminderEnabled,
@@ -545,7 +655,13 @@ function TaskTemplateEditor({
     const parsedUnits = Number(units.replace(",", "."));
     const parsedStartWeek = Math.min(53, Math.max(1, Number(startWeek) || task.recurrenceStartWeek || 1));
     const nextScheduledDays =
-      scheduleType === "daily" ? days : scheduleType === "weekly_days" ? (scheduledDays.length ? scheduledDays : [days[0]]) : scheduledDays;
+      scheduleType === "daily"
+        ? days
+        : scheduleType === "weekly_days" || scheduleType === "every_x_weeks"
+          ? scheduledDays.length
+            ? scheduledDays
+            : [days[0]]
+          : scheduledDays;
     updateTask(
       task.id,
       title,
@@ -555,6 +671,9 @@ function TaskTemplateEditor({
             recurrenceType: scheduleType,
             scheduledDays: nextScheduledDays,
             recurrenceStartWeek: parsedStartWeek,
+            recurrenceIntervalWeeks: Number(intervalWeeks),
+            recurrenceDayOfMonth: Number(dayOfMonth),
+            recurrenceMonth: Number(month),
             reminderOptionId,
             reminderTime,
           }
@@ -662,7 +781,7 @@ function TaskTemplateEditor({
               placeholder="Start-KW"
               placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
             />
-            {scheduleType === "weekly_days" && (
+            {(scheduleType === "weekly_days" || scheduleType === "every_x_weeks") && (
               <View style={styles.dayToggleGrid}>
                 {days.map((day) => {
                   const active = scheduledDays.includes(day);
@@ -681,6 +800,17 @@ function TaskTemplateEditor({
                 })}
               </View>
             )}
+            <RecurrenceDetailFields
+              scheduleType={scheduleType}
+              intervalWeeks={intervalWeeks}
+              setIntervalWeeks={setIntervalWeeks}
+              dayOfMonth={dayOfMonth}
+              setDayOfMonth={setDayOfMonth}
+              month={month}
+              setMonth={setMonth}
+              darkMode={darkMode}
+              canManagePlan={canManagePlan}
+            />
           </>
         ) : (
           <Text style={[styles.permissionHint, themed.muted, darkMode && styles.mutedDark]}>

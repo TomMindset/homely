@@ -86,18 +86,19 @@ Offen:
 
 - Fairness sollte noch staerker als emotionales Versprechen im Alltag auftauchen, nicht nur im Fairness-Tab.
 
-## 6. Kalender- und Jahresmodus: teilweise erfuellt
+## 6. Kalender- und Jahresmodus: gut unterwegs
 
 Erfuellt:
 
 - Aufgaben-Langzeituebersicht ist vorhanden und nutzt den vollstaendigen Plan.
 - Essensplan hat eine langfristige Sicht.
+- Eigene Aufgaben koennen `alle X Wochen`, monatlich und jaehrlich geplant werden.
+- Intervall, Tag und Monat werden lokal gespeichert und ueber Supabase-Sync vorbereitet.
 - Tagesansicht bleibt leicht, Langzeitplanung ist als Verwalterwerkzeug angelegt.
 
 Offen:
 
 - Monats- und Jahreskalender fehlen noch.
-- Wiederholungen `alle X Wochen`, monatlich und jaehrlich fehlen noch als echte Planlogik.
 - Urlaub, Ferien, saisonale Aufgaben und Muelltermine fehlen noch.
 - Langfristige Planung braucht spaeter Filter nach Person, Aufgabe und Haushalt.
 - Optionale Erweiterung ist konzipiert: Muelltermine als Terminserien, Urlaub/Ferien als Sperrzeiten mit Planverschiebung oder Pausierung.
@@ -123,5 +124,5 @@ Offen:
 
 1. Migration `0012_notification_dispatch_expansion.sql` ausfuehren und `send-task-reminders` neu deployen.
 2. Geraetetest mit aktuellem Stand: Heute, Aufgaben, Fairness, Essen, Mehr, Push-Test, Ueberfaellig-Push, Haushaltsstatus und Sync.
-3. Kalenderlogik erweitern: alle X Wochen, monatlich, jaehrlich.
-4. Wiederverwendbare UI-Zustaende und Offline-/Konfliktlogik vereinheitlichen.
+3. Wiederverwendbare UI-Zustaende und Offline-/Konfliktlogik vereinheitlichen.
+4. Manuelle Kalenderereignisse fuer Muell als Aufgabenserie vorbereiten.

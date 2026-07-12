@@ -1,7 +1,7 @@
 import type { DayName, TaskTemplate } from "../utils/planner";
 
 export type ViewId = "today" | "week" | "fairness" | "meals" | "tasks" | "family" | "settings";
-export type NewTaskScheduleType = "once" | "daily" | "weekly_days";
+export type NewTaskScheduleType = "once" | "daily" | "weekly_days" | "every_x_weeks" | "monthly" | "yearly";
 export type ReminderOptionId = "none" | "same_day" | "day_before";
 export type DesignSetId = "homely" | "fresh" | "calm" | "contrast";
 
@@ -151,6 +151,9 @@ export const scheduleOptions: Array<{ id: NewTaskScheduleType; label: string }> 
   { id: "once", label: "Einmalig" },
   { id: "daily", label: "Taeglich" },
   { id: "weekly_days", label: "Wochentage" },
+  { id: "every_x_weeks", label: "Alle X Wochen" },
+  { id: "monthly", label: "Monatlich" },
+  { id: "yearly", label: "Jaehrlich" },
 ];
 
 export const reminderOptions: Array<{ id: ReminderOptionId; label: string; enabled: boolean; leadDays: number }> = [
@@ -159,9 +162,26 @@ export const reminderOptions: Array<{ id: ReminderOptionId; label: string; enabl
   { id: "day_before", label: "Vortag", enabled: true, leadDays: 1 },
 ];
 
-export function scheduleLabel(type: NewTaskScheduleType, selectedDays: DayName[]) {
+export function scheduleLabel(
+  type: NewTaskScheduleType,
+  selectedDays: DayName[],
+  options?: { intervalWeeks?: number; dayOfMonth?: number; month?: number },
+) {
   if (type === "daily") return "Taeglich ab Start-KW";
   if (type === "weekly_days") return `Woechentlich: ${selectedDays.join(", ")}`;
+  if (type === "every_x_weeks") {
+    const interval = Math.max(1, Math.round(options?.intervalWeeks ?? 2));
+    return `Alle ${interval} Wochen: ${selectedDays.join(", ")}`;
+  }
+  if (type === "monthly") {
+    const day = Math.min(31, Math.max(1, Math.round(options?.dayOfMonth ?? 1)));
+    return `Monatlich am ${day}.`;
+  }
+  if (type === "yearly") {
+    const day = Math.min(31, Math.max(1, Math.round(options?.dayOfMonth ?? 1)));
+    const month = Math.min(12, Math.max(1, Math.round(options?.month ?? 1)));
+    return `Jaehrlich am ${day}.${month}.`;
+  }
   return "Einmalig";
 }
 
