@@ -534,6 +534,32 @@ export function usePlannerState() {
     });
   }
 
+  function applyTaskDefaultMember(taskId: string, memberId: string, fromWeek: number) {
+    if (!canManagePlan) return;
+    const task = tasks.find((item) => item.id === taskId);
+    setAssignments((items) => {
+      const updated = items.map((assignment) =>
+        assignment.taskId === taskId &&
+        assignment.year === seedData.family.year &&
+        assignment.week >= fromWeek &&
+        assignment.status === "open"
+          ? { ...assignment, memberId }
+          : assignment,
+      );
+      saveAssignmentState(updated);
+      if (activeRemoteHouseholdId && task) {
+        runRemoteSync("Standard-Zuordnung", () =>
+          upsertRemoteTaskWithAssignments({
+            householdId: activeRemoteHouseholdId,
+            task,
+            assignments: updated,
+          }),
+        );
+      }
+      return updated;
+    });
+  }
+
   function updateTask(taskId: string, title: string, effortUnits: number, ruleUpdate?: TaskRuleUpdate) {
     if (!canManagePlan) return;
     if (!title.trim() || !Number.isFinite(effortUnits) || effortUnits <= 0) return;
@@ -1121,6 +1147,7 @@ export function usePlannerState() {
     activeMember,
     activeMemberId: activeMember?.id ?? activeMemberId,
     activeRemoteHouseholdId,
+    applyTaskDefaultMember,
     applyRemoteSnapshot,
     assignments,
     canManagePlan,

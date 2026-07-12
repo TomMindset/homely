@@ -466,6 +466,7 @@ check("professional MVP UI gates are wired", () => {
   assert(tasks.includes("LongtermTasksOverview") && tasks.includes("Langfristig"), "Tasks screen should include a long-term overview");
   assert(app.includes("assignments={planner.assignments}") && tasks.includes("LongtermTasksOverview"), "Tasks long-term view should receive the full assignment plan");
   assert(tasks.includes("Zuordnung in KW"), "Task editing should expose assignment controls");
+  assert(plannerState.includes("applyTaskDefaultMember") && tasks.includes("Uebliche Zustaendigkeit"), "Task editing should support usual/default assignees");
   assert(tasks.includes("buildFairAssignmentPlan") && tasks.includes("Fair verteilen"), "Task editing should offer fair assignment suggestions");
   assert(plannerState.includes("undoDeleteTask") && tasks.includes("Rueckgaengig"), "Task deletion should expose undo");
   assert(tasks.includes("taskEditorCard"), "Task editing should use a dedicated full-width editor card");

@@ -40,6 +40,8 @@ Ziel: Homely soll nicht nur Aufgaben verwalten, sondern Alltagsstress reduzieren
 - Nutzer bestaetigen Vorschlaege vor dem Speichern.
 - Aufgabenbearbeitung zeigt pro Aufgabe einen `Fair verteilen`-Vorschlag fuer die gewaehlte KW.
 - Der Vorschlag berechnet die niedrigste aktuelle Planlast ohne die bearbeitete Aufgabe doppelt zu zaehlen.
+- Aufgabenbearbeitung kennt `Uebliche Zustaendigkeit` ab gewaehlter KW, z. B. fuer Waesche oder Getraenke.
+- Uebliche Zustaendigkeit veraendert offene Zukunftstermine; erledigte Historie bleibt erhalten.
 
 ## 5. Fairness als Kernversprechen
 

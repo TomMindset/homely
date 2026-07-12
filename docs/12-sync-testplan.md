@@ -46,6 +46,8 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 - Fairness-Zuordnung auf eine andere Person wird remote gespeichert.
 - Aufgabe neu anlegen erscheint nach `Plan laden` weiterhin.
 - Aufgabe bearbeiten speichert Titel, Punkte und Wiederholung.
+- `Uebliche Zustaendigkeit` setzt offene Termine einer Aufgabe ab der gewaehlten KW auf eine Standardperson.
+- Bereits erledigte Aufgaben werden durch `Uebliche Zustaendigkeit` nicht veraendert.
 - Beim Bearbeiten zeigt `Fair verteilen` einen bestaetigungspflichtigen Vorschlag nach aktueller Wochenlast.
 - Aufgabe loeschen verschwindet nach `Plan laden`.
 - Direkt nach dem Loeschen kann `Rueckgaengig` die Aufgabe inklusive Zuordnungen wiederherstellen.

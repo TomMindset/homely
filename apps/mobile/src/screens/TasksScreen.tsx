@@ -91,6 +91,7 @@ export function TasksScreen({
   setNewReminderTime,
   canManagePlan,
   addTask,
+  applyTaskDefaultMember,
   updateTask,
   deleteTask,
   restoreDefaultTasks,
@@ -119,6 +120,7 @@ export function TasksScreen({
   setNewReminderTime: (value: string) => void;
   canManagePlan: boolean;
   addTask: () => void;
+  applyTaskDefaultMember: (taskId: string, memberId: string, fromWeek: number) => void;
   updateTask: (taskId: string, title: string, effortUnits: number, ruleUpdate?: TaskUpdateOptions) => void;
   deleteTask: (taskId: string) => void;
   restoreDefaultTasks: () => void;
@@ -333,6 +335,13 @@ export function TasksScreen({
       <Text style={[styles.sectionTitle, styles.spacedTitle, themed.text, darkMode && styles.textDark]}>{tasks.length} Aufgaben</Text>
       {tasks.map((task) => {
         const rule = getRuleByTaskId(seedData.scheduleRules, task.id);
+        const taskAssignments = selectedWeekAssignments.filter((assignment) => assignment.taskId === task.id);
+        const futureTaskAssignments = assignments.filter(
+          (assignment) =>
+            assignment.taskId === task.id &&
+            assignment.year === seedData.family.year &&
+            assignment.week >= selectedWeek,
+        );
         return (
           <TaskTemplateEditor
             key={task.id}
@@ -340,13 +349,15 @@ export function TasksScreen({
             ruleText={task.recurrenceLabel || ruleLabel(rule)}
             darkMode={darkMode}
             canManagePlan={canManagePlan}
-            assignments={selectedWeekAssignments.filter((assignment) => assignment.taskId === task.id)}
+            assignments={taskAssignments}
+            futureAssignments={futureTaskAssignments}
             weekAssignments={selectedWeekAssignments}
             tasks={tasks}
             members={members}
             selectedWeek={selectedWeek}
             updateTask={updateTask}
             deleteTask={deleteTask}
+            applyTaskDefaultMember={applyTaskDefaultMember}
             updateAssignmentMember={updateAssignmentMember}
           />
         );
@@ -453,12 +464,14 @@ function TaskTemplateEditor({
   darkMode,
   canManagePlan,
   assignments,
+  futureAssignments,
   weekAssignments,
   tasks,
   members,
   selectedWeek,
   updateTask,
   deleteTask,
+  applyTaskDefaultMember,
   updateAssignmentMember,
 }: {
   task: TaskTemplate;
@@ -466,6 +479,7 @@ function TaskTemplateEditor({
   darkMode: boolean;
   canManagePlan: boolean;
   assignments: Assignment[];
+  futureAssignments: Assignment[];
   weekAssignments: Assignment[];
   tasks: TaskTemplate[];
   members: Member[];
@@ -477,6 +491,7 @@ function TaskTemplateEditor({
     ruleUpdate?: TaskUpdateOptions,
   ) => void;
   deleteTask: (taskId: string) => void;
+  applyTaskDefaultMember: (taskId: string, memberId: string, fromWeek: number) => void;
   updateAssignmentMember: (assignmentId: string, memberId: string) => void;
 }) {
   const themed = useThemeStyles(darkMode);
@@ -493,6 +508,16 @@ function TaskTemplateEditor({
     const assignment = assignments.find((item) => item.id === suggestion.assignmentId);
     return assignment?.memberId !== suggestion.memberId;
   });
+  const openFutureAssignments = futureAssignments.filter((assignment) => assignment.status === "open");
+  const usualMemberId = members
+    .map((member) => ({
+      member,
+      count: openFutureAssignments.filter((assignment) => assignment.memberId === member.id).length,
+    }))
+    .sort((first, second) => {
+      if (second.count !== first.count) return second.count - first.count;
+      return first.member.name.localeCompare(second.member.name);
+    })[0]?.member.id;
 
   useEffect(() => {
     if (!editing) {
@@ -566,6 +591,26 @@ function TaskTemplateEditor({
         {
           text: "Anwenden",
           onPress: () => fairAssignmentChanges.forEach((suggestion) => updateAssignmentMember(suggestion.assignmentId, suggestion.memberId)),
+        },
+      ],
+    );
+  }
+
+  function confirmApplyDefaultMember(member: Member) {
+    const affectedCount = openFutureAssignments.filter((assignment) => assignment.memberId !== member.id).length;
+    if (!affectedCount) {
+      Alert.alert("Schon gesetzt", `${member.name} ist bereits die uebliche Person fuer offene Termine dieser Aufgabe.`);
+      return;
+    }
+
+    Alert.alert(
+      "Uebliche Zustaendigkeit setzen?",
+      `${member.name} wird ab KW ${selectedWeek} fuer ${affectedCount} offene Termin(e) dieser Aufgabe eingetragen. Erledigte Aufgaben bleiben unveraendert.`,
+      [
+        { text: "Abbrechen", style: "cancel" },
+        {
+          text: "Setzen",
+          onPress: () => applyTaskDefaultMember(task.id, member.id, selectedWeek),
         },
       ],
     );
@@ -650,9 +695,38 @@ function TaskTemplateEditor({
           darkMode={darkMode}
           canManagePlan={canManagePlan}
         />
-        {!!assignments.length && (
+        {!!(assignments.length || openFutureAssignments.length) && (
           <View style={styles.editorRow}>
             <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Zuordnung in KW {selectedWeek}</Text>
+            {!!openFutureAssignments.length && canManagePlan && (
+              <View style={[styles.defaultAssignBox, darkMode && styles.rowDark, themed.card]}>
+                <Text style={[styles.taskTitle, themed.text, darkMode && styles.textDark]}>Uebliche Zustaendigkeit</Text>
+                <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+                  Setzt offene Termine dieser Aufgabe ab KW {selectedWeek}. Erledigte Aufgaben bleiben als Historie erhalten.
+                </Text>
+                <View style={styles.memberPreviewGrid}>
+                  {members.map((member) => {
+                    const active = usualMemberId === member.id;
+                    const affectedCount = openFutureAssignments.filter((assignment) => assignment.memberId !== member.id).length;
+                    return (
+                      <TouchableOpacity
+                        key={member.id}
+                        style={[styles.memberPreviewChip, darkMode && styles.rowDark, themed.card, active && themed.active]}
+                        accessibilityRole="button"
+                        accessibilityLabel={`${member.name} als uebliche Person fuer ${task.title} setzen`}
+                        accessibilityState={{ selected: active }}
+                        onPress={() => confirmApplyDefaultMember(member)}
+                      >
+                        <View style={[styles.dot, { backgroundColor: member.color }]} />
+                        <Text style={[styles.taskMeta, themed.muted, active && styles.segmentButtonTextActive]}>
+                          {member.shortCode} {affectedCount ? `+${affectedCount}` : ""}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              </View>
+            )}
             {!!fairAssignmentPlan.length && canManagePlan && (
               <View style={[styles.fairAssignBox, darkMode && styles.rowDark, themed.soft]}>
                 <View style={styles.scoreHeader}>

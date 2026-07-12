@@ -127,6 +127,7 @@ export const styles = StyleSheet.create({
   scoreDetailStrong: { flex: 1, color: "#202124", fontSize: 12, fontWeight: "900" },
   scoreUnits: { color: "#202124", fontWeight: "900" },
   assignmentEditor: { borderRadius: 8, borderWidth: 1, borderColor: "#ded6ca", padding: 12, marginBottom: 10 },
+  defaultAssignBox: { borderRadius: 8, borderWidth: 1, borderColor: "#ded6ca", backgroundColor: "#fffaf2", padding: 12, marginBottom: 10 },
   fairAssignBox: { borderRadius: 8, borderWidth: 1, borderColor: "#ded6ca", padding: 12, marginBottom: 10 },
   fairAssignPreview: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8, marginBottom: 10 },
   fairAssignChip: { flexGrow: 1, flexBasis: 92, minHeight: 52, borderRadius: 8, borderWidth: 1, borderColor: "#ded6ca", padding: 8, justifyContent: "center" },
