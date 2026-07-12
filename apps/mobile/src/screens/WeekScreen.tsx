@@ -5,6 +5,7 @@ import { seedData } from "../data/seedData";
 import { styles } from "../styles/plannerStyles";
 import { useThemeStyles } from "../theme/useThemeStyles";
 import { Assignment, Member, TaskTemplate, getTaskById, getWeekAssignments } from "../utils/planner";
+import { EmptyState } from "../components/StateMessage";
 
 type WeekSummary = {
   total: number;
@@ -126,7 +127,11 @@ export function WeekScreen({
             {mode === "mine" ? `${activeMember?.name ?? "Meine"} Aufgaben` : "Alle Aufgaben"}
           </Text>
           {!listedAssignments.length && (
-            <Text style={[styles.permissionHint, themed.muted, darkMode && styles.mutedDark]}>Fuer diese Auswahl sind keine Aufgaben geplant.</Text>
+            <EmptyState
+              darkMode={darkMode}
+              title="Keine Aufgaben geplant."
+              message="Fuer diese Auswahl gibt es in der gewaehlten Woche keine Aufgaben."
+            />
           )}
           {listedAssignments.map((assignment) => (
             <WeekAssignmentLine key={assignment.id} assignment={assignment} tasks={tasks} members={members} darkMode={darkMode} />
@@ -141,9 +146,7 @@ export function WeekScreen({
             <View key={day} style={styles.daySection}>
               <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>{day}</Text>
               {!dayAssignments.length && (
-                <View style={[styles.emptyStateCard, themed.soft]}>
-                  <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Keine Aufgaben geplant.</Text>
-                </View>
+                <EmptyState darkMode={darkMode} title="Keine Aufgaben geplant." message="Dieser Tag bleibt frei." />
               )}
               {dayAssignments.map((assignment) => (
                 <WeekAssignmentLine key={assignment.id} assignment={assignment} tasks={tasks} members={members} darkMode={darkMode} />

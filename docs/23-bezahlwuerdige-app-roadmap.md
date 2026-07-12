@@ -68,8 +68,8 @@ Aktueller Umsetzungsabgleich: siehe `docs/25-7-konzepte-status.md`.
 ## 7. Polierte Details
 
 - Undo nach Aufgaben-Loeschen ist vorhanden und stellt Zuordnungen wieder her.
-- Lade-, Fehler- und Leerzustaende fuer Hauptflows sind sichtbar: Heute, Woche und Sync.
-- Offline-/Sync-Konflikte werden im Kopfbereich ruhig erklaert; lokale Aenderungen bleiben nachvollziehbar.
+- Lade-, Fehler-, Undo- und Leerzustaende fuer Hauptflows nutzen gemeinsame Statusbausteine: Heute, Woche, Aufgaben, Sync und Konto.
+- Offline-/Sync-Konflikte werden im Kopfbereich und Konto-/Syncbereich ruhig erklaert; lokale Aenderungen bleiben nachvollziehbar.
 - Keine Textueberlaeufe auf Samsung-Groessen.
 - App-Version, Diagnose und Release-Check bleiben sichtbar fuer Tests.
 

@@ -15,6 +15,7 @@ import { getTaskPackageStats, taskPackages, type TaskPackageId } from "../data/t
 import { styles } from "../styles/plannerStyles";
 import { useThemeStyles } from "../theme/useThemeStyles";
 import { Assignment, DayName, Member, TaskTemplate, getRuleByTaskId, getTaskById, ruleLabel } from "../utils/planner";
+import { StateMessage, UndoToast } from "../components/StateMessage";
 
 type TaskUpdateOptions = {
   recurrenceType?: NewTaskScheduleType;
@@ -270,11 +271,12 @@ export function TasksScreen({
       <Text style={[styles.eyebrow, themed.muted]}>Neue Aufgabe</Text>
       {!canManagePlan && <Text style={[styles.permissionHint, themed.muted, darkMode && styles.mutedDark]}>Nur Gruender und Verwalter koennen Aufgaben verwalten.</Text>}
       {hiddenDefaultTaskCount > 0 && canManagePlan && (
-        <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
-          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Standard-Aufgaben ausgeblendet</Text>
-          <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
-            {hiddenDefaultTaskCount} Vorlage(n) sind ausgeblendet. Du kannst sie als Startmaske wiederherstellen und danach anpassen.
-          </Text>
+        <StateMessage
+          darkMode={darkMode}
+          tone="info"
+          title="Standard-Aufgaben ausgeblendet"
+          message={`${hiddenDefaultTaskCount} Vorlage(n) sind ausgeblendet. Du kannst sie als Startmaske wiederherstellen und danach anpassen.`}
+        >
           <TouchableOpacity
             style={[styles.secondaryActionFull, themed.soft]}
             accessibilityRole="button"
@@ -283,14 +285,14 @@ export function TasksScreen({
           >
             <Text style={[styles.secondaryActionText, themed.muted]}>Vorlagen wiederherstellen</Text>
           </TouchableOpacity>
-        </View>
+        </StateMessage>
       )}
       {!!lastDeletedTaskTitle && canManagePlan && (
-        <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
-          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Aufgabe geloescht</Text>
-          <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
-            {lastDeletedTaskTitle} wurde entfernt. Du kannst die Aufgabe inklusive Zuordnungen direkt wiederherstellen.
-          </Text>
+        <UndoToast
+          darkMode={darkMode}
+          title="Aufgabe geloescht"
+          message={`${lastDeletedTaskTitle} wurde entfernt. Du kannst die Aufgabe inklusive Zuordnungen direkt wiederherstellen.`}
+        >
           <TouchableOpacity
             style={[styles.secondaryActionFull, themed.soft]}
             accessibilityRole="button"
@@ -299,7 +301,7 @@ export function TasksScreen({
           >
             <Text style={[styles.secondaryActionText, themed.muted]}>Rueckgaengig</Text>
           </TouchableOpacity>
-        </View>
+        </UndoToast>
       )}
       {canManagePlan && (
         <View style={styles.packageLibrary}>

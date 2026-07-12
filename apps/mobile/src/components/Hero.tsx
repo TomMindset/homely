@@ -6,6 +6,7 @@ import { styles } from "../styles/plannerStyles";
 import { useThemeColors } from "../theme/themeContext";
 import { DayName, Member, getDateForWeekDay } from "../utils/planner";
 import { MemberButton } from "./MemberButton";
+import { StateMessage } from "./StateMessage";
 
 export function Hero({
   completion,
@@ -105,10 +106,14 @@ export function Hero({
         )}
       </TouchableOpacity>
       {syncNotice && (
-        <View style={[styles.statusNotice, { backgroundColor: syncTone.backgroundColor, borderColor: syncTone.borderColor }]}>
-          <Text style={[styles.taskTitle, { color: syncTone.color }]}>{syncNotice.title}</Text>
-          <Text style={[styles.taskMeta, { color: syncTone.color }]}>{syncNotice.copy}</Text>
-        </View>
+        <StateMessage
+          darkMode={darkMode}
+          tone={syncStatus.state === "error" ? "error" : "loading"}
+          title={syncNotice.title}
+          message={syncNotice.copy}
+          actionLabel={syncStatus.state === "error" ? "Erneut laden" : undefined}
+          onAction={syncStatus.state === "error" ? refreshRemoteSnapshot : undefined}
+        />
       )}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.rowScroll}>
         {days.map((day) => {

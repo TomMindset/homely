@@ -473,6 +473,7 @@ check("source files keep sync-status UI and remote writers connected", () => {
 check("professional MVP UI gates are wired", () => {
   const app = read("apps/mobile/App.tsx");
   const plannerState = read("apps/mobile/src/state/usePlannerState.ts");
+  const hero = read("apps/mobile/src/components/Hero.tsx");
   const today = read("apps/mobile/src/screens/TodayScreen.tsx");
   const week = read("apps/mobile/src/screens/WeekScreen.tsx");
   const meals = read("apps/mobile/src/screens/MealsScreen.tsx");
@@ -483,6 +484,7 @@ check("professional MVP UI gates are wired", () => {
   const taskPackages = read("apps/mobile/src/data/taskPackages.ts");
   const family = read("apps/mobile/src/screens/FamilyScreen.tsx");
   const styles = read("apps/mobile/src/styles/plannerStyles.ts");
+  const stateMessage = read("apps/mobile/src/components/StateMessage.tsx");
   assert(app.includes("syncStatus={planner.syncStatus}"), "Settings should receive planner sync status");
   assert(today.includes('"mine" | "all"') && today.includes("Meine"), "Today should support mine/all personal scope");
   assert(
@@ -494,6 +496,10 @@ check("professional MVP UI gates are wired", () => {
     "Today should group tasks into personal daily priority sections",
   );
   assert(week.includes("Keine Aufgaben geplant"), "Week day view should explain empty days");
+  assert(stateMessage.includes("StateMessage") && stateMessage.includes("EmptyState") && stateMessage.includes("UndoToast"), "Reusable state message components should exist");
+  assert(today.includes("EmptyState") && week.includes("EmptyState"), "Today and Week should use the shared empty state");
+  assert(tasks.includes("UndoToast") && settings.includes("StateMessage"), "Tasks and Settings should use shared undo/status messages");
+  assert(hero.includes("StateMessage") && hero.includes("Lokale Aenderungen bleiben erhalten"), "Hero should use the shared sync/error banner");
   assert(plannerState.includes("setSelectedMemberId(nextActiveMemberId || \"all\")"), "Planner should start on the active member when available");
   assert(plannerState.includes("setSelectedMemberId(memberId)") && plannerState.includes("setView(\"today\")"), "Active member switching should return to today and personal scope");
   assert(week.includes("modeSummary"), "Week summary should follow selected week mode");

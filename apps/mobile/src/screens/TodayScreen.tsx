@@ -5,6 +5,7 @@ import { seedData } from "../data/seedData";
 import { styles } from "../styles/plannerStyles";
 import { useThemeStyles } from "../theme/useThemeStyles";
 import { Assignment, MealPlanEntry, Member, TaskTemplate, getRuleByTaskId, getTaskById, ruleLabel } from "../utils/planner";
+import { EmptyState } from "../components/StateMessage";
 
 type TodayGroupId = "now" | "later" | "done";
 
@@ -182,15 +183,15 @@ export function TodayScreen({
         </View>
       )}
       {!displayedAssignments.length && (
-        <View style={[styles.emptyStateCard, themed.soft]}>
-          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>
-            {mode === "mine" ? "Heute ist fuer dich nichts offen." : "Heute ist nichts geplant."}
-          </Text>
-          <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
-            {mode === "mine" && assignments.length
+        <EmptyState
+          darkMode={darkMode}
+          title={mode === "mine" ? "Heute ist fuer dich nichts offen." : "Heute ist nichts geplant."}
+          message={
+            mode === "mine" && assignments.length
               ? "Im Haushalt gibt es noch Aufgaben fuer andere Personen."
-              : "Homely bleibt ruhig, wenn der Tag frei ist. Plane neue Aufgaben oder pruefe die Woche."}
-          </Text>
+              : "Homely bleibt ruhig, wenn der Tag frei ist. Plane neue Aufgaben oder pruefe die Woche."
+          }
+        >
           <View style={styles.editorActions}>
             {mode === "mine" && assignments.length > 0 && (
               <TouchableOpacity style={[styles.secondaryAction, themed.buttonSurface]} accessibilityRole="button" onPress={() => setMode("all")}>
@@ -206,7 +207,7 @@ export function TodayScreen({
               </TouchableOpacity>
             )}
           </View>
-        </View>
+        </EmptyState>
       )}
       {todayGroups.map((group) => (
         <View key={group.id} style={styles.todayGroup}>

@@ -36,6 +36,7 @@ import { getSupabaseStatusLabel } from "../services/supabaseConfig";
 import { styles } from "../styles/plannerStyles";
 import { useThemeStyles } from "../theme/useThemeStyles";
 import { Assignment, MealPlanEntry, Member, TaskTemplate } from "../utils/planner";
+import { StateMessage } from "../components/StateMessage";
 import { FamilyScreen } from "./FamilyScreen";
 
 type SettingsTab = "account" | "household" | "appearance" | "readiness";
@@ -44,6 +45,13 @@ type SyncStatus = {
   state: "local" | "syncing" | "synced" | "error";
   message: string;
 };
+
+function getMessageTone(message: string): "success" | "warning" | "error" {
+  const lower = message.toLowerCase();
+  if (lower.includes("konnte nicht") || lower.includes("fehler") || lower.includes("blockiert") || lower.includes("fehl")) return "error";
+  if (lower.includes("bitte") || lower.includes("noch") || lower.includes("lokal")) return "warning";
+  return "success";
+}
 
 const readinessItems = [
   { title: "Kernnutzen", status: "v1 bereit", detail: "Aufgaben, Essen und Fairness sind als taeglicher Kernfluss vorhanden." },
@@ -842,7 +850,9 @@ function AccountSettings({
               </TouchableOpacity>
             )}
           </View>
-          {!!message && <Text style={[styles.permissionHint, styles.spacedTitle, darkMode && styles.mutedDark]}>{message}</Text>}
+          {!!message && (
+            <StateMessage darkMode={darkMode} tone={getMessageTone(message)} title="Kontostatus" message={message} />
+          )}
         </>
       )}
 
@@ -884,7 +894,9 @@ function AccountSettings({
               </View>
             );
           })}
-          {!!syncMessage && <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>{syncMessage}</Text>}
+          {!!syncMessage && (
+            <StateMessage darkMode={darkMode} tone={getMessageTone(syncMessage)} title="Haushaltswechsel" message={syncMessage} />
+          )}
         </View>
       )}
 
@@ -1041,7 +1053,9 @@ function AccountSettings({
           >
             <Text style={styles.deleteButtonText}>Push deaktivieren</Text>
           </TouchableOpacity>
-          {!!pushMessage && <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>{pushMessage}</Text>}
+          {!!pushMessage && (
+            <StateMessage darkMode={darkMode} tone={getMessageTone(pushMessage)} title="Push-Status" message={pushMessage} />
+          )}
         </View>
       )}
 
@@ -1058,7 +1072,9 @@ function AccountSettings({
           <TouchableOpacity style={[styles.secondaryActionFull, themed.soft, busy && styles.disabledButton]} disabled={busy} onPress={runDatabaseCheck}>
             <Text style={[styles.secondaryActionText, themed.muted]}>Datenbank pruefen</Text>
           </TouchableOpacity>
-          {!!databaseMessage && <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>{databaseMessage}</Text>}
+          {!!databaseMessage && (
+            <StateMessage darkMode={darkMode} tone={getMessageTone(databaseMessage)} title="Datenbankstatus" message={databaseMessage} />
+          )}
         </View>
         <View style={styles.editorActions}>
           <TouchableOpacity style={[styles.secondaryAction, themed.soft, busy && styles.disabledButton]} disabled={busy} onPress={loadHouseholds}>
@@ -1088,7 +1104,9 @@ function AccountSettings({
           Hochladen speichert lokale Mitglieder, Aufgaben, Punkte und Wochenzuordnungen in Supabase. Laden ersetzt die lokale Ansicht durch den
           Supabase-Stand.
         </Text>
-        {!!syncMessage && <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>{syncMessage}</Text>}
+        {!!syncMessage && (
+          <StateMessage darkMode={darkMode} tone={getMessageTone(syncMessage)} title="Sync-Status" message={syncMessage} />
+        )}
         {!!activeRemoteHouseholdId && (
           <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Aktiver Sync-Haushalt: {activeRemoteHouseholdId}</Text>
         )}

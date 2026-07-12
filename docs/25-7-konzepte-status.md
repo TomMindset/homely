@@ -110,13 +110,14 @@ Erfuellt:
 - Safe-Areas fuer Android/Samsung wurden beruecksichtigt.
 - Leerzustaende, Bestatigungen, Checkbereich und Release-Gates sind vorhanden.
 - Undo nach Aufgabenloeschung ist vorhanden und stellt Aufgaben samt Zuordnungen wieder her.
+- `StateMessage`, `EmptyState` und `UndoToast` vereinheitlichen Leer-, Fehler-, Sync- und Rueckgaengig-Hinweise in den Hauptflows.
 - Sync-Lade- und Fehlerhinweise erklaeren ruhig, dass lokale Aenderungen erhalten bleiben.
 - Push-Testbenachrichtigung ist vorhanden.
 
 Offen:
 
-- Gemeinsame Komponenten fuer `EmptyState`, `LoadingState`, `ErrorBanner` und `UndoToast` sollten vereinheitlicht werden.
-- Offline- und Konflikthinweise brauchen spaeter eine klare Loesungslogik, nicht nur Erklaerung.
+- Ein eigener `LoadingState` fuer laengere Ladeflaechen fehlt noch; kleinere Lade- und Sync-Zustaende nutzen bereits `StateMessage`.
+- Offline- und Konflikthinweise brauchen spaeter eine echte Loesungslogik mit Auswahl, nicht nur Erklaerung.
 - Samsung-Visual-QA sollte pro Release feste Screenshots fuer Heute, Aufgaben, Essen, Fairness und Mehr enthalten.
 - Kleine Texte und Buttons sollten nach echten Geraetetests weiter gegen Umbrueche gehaertet werden.
 
