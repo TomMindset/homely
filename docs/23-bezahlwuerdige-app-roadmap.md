@@ -4,6 +4,8 @@ Stand: 2026-07-12
 
 Ziel: Homely soll nicht nur Aufgaben verwalten, sondern Alltagsstress reduzieren. Die App wird dann bezahlwuerdig, wenn neue Nutzer schnell starten, regelmaessige Nutzer sofort ihre Aufgaben sehen und Verwalter faire Entscheidungen treffen koennen.
 
+Aktueller Umsetzungsabgleich: siehe `docs/25-7-konzepte-status.md`.
+
 ## 1. Zuverlaessige Erinnerungen
 
 - Push-Grundlage ist vorhanden: Opt-in, Expo Push Token, Supabase-Tabellen und RLS.
@@ -89,10 +91,10 @@ Umsetzungsregel:
 
 ## Prioritaet
 
-1. Push-Versand fuer faellige Aufgaben auf Samsung endtesten.
-2. Onboarding mit Musteraufgabenpaketen im Geraetetest stabilisieren.
-3. `Heute` als Alltagsschaltzentrale auf Samsung gegen echte Haushaltsdaten testen.
-4. Fairness-Insights auf Samsung gegen echte Haushaltsdaten testen.
-5. Intelligente Aufgabenverteilung.
-6. Kalender- und Jahresmodus.
+1. Aktuellen Stand auf Samsung testen: Heute, Aufgaben, Fairness, Essen, Mehr, Push-Test und Sync.
+2. Ueberfaellig- und Haushaltsstatus-Push als echte Dispatch-Faelle umsetzen.
+3. `Heute` weiter gruppieren: jetzt wichtig, spaeter heute, erledigt.
+4. Fairness visualisieren: Balken, Wochenverlauf, Danke-Moment.
+5. Kalenderlogik erweitern: alle X Wochen, monatlich, jaehrlich.
+6. Wiederverwendbare UI-Zustaende und Offline-/Konfliktlogik vereinheitlichen.
 7. Polish-Schicht pro Release.

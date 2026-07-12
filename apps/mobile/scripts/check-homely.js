@@ -533,6 +533,22 @@ check("Google Play release pack is prepared", () => {
   assert(websiteCname.trim() === "aesti.de", "GitHub Pages CNAME should point to aesti.de");
 });
 
+check("seven concept status reflects current implementation", () => {
+  const status = read("docs/25-7-konzepte-status.md");
+  [
+    "Testbenachrichtigung",
+    "Ruhezeiten",
+    "Startplan-Vorschau",
+    "Fair verteilen",
+    "Uebliche Zustaendigkeit",
+    "Undo nach Aufgabenloeschung",
+    "Ueberfaellig-Erinnerungen",
+    "Haushaltsstatus fuer Verwalter",
+  ].forEach((item) => {
+    assert(status.includes(item), `Seven concept status missing ${item}`);
+  });
+});
+
 async function liveCheck(name, fn) {
   try {
     await fn();
