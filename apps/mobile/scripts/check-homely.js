@@ -425,6 +425,7 @@ check("source files keep sync-status UI and remote writers connected", () => {
     assert(plannerState.includes(needle), `Planner state missing ${needle}`);
   });
   assert(hero.includes("syncStatus"), "Hero should show sync status");
+  assert(hero.includes("syncNotice") && hero.includes("Cloud-Sync pruefen"), "Hero should explain sync loading and error states");
   assert(settings.includes("deleteRemoteHousehold"), "Settings should expose remote household deletion");
   assert(settings.includes("Sync trennen"), "Settings should expose local sync disconnect");
   assert(settings.includes("requestAccountDeletion"), "Settings should expose account deletion");
@@ -451,6 +452,7 @@ check("professional MVP UI gates are wired", () => {
   assert(app.includes("syncStatus={planner.syncStatus}"), "Settings should receive planner sync status");
   assert(today.includes('"mine" | "all"') && today.includes("Meine"), "Today should support mine/all personal scope");
   assert(today.includes("TodayFocus") && today.includes("Jetzt offen") && today.includes("Haushalt helfen"), "Today should act as a personal daily command center");
+  assert(week.includes("Keine Aufgaben geplant"), "Week day view should explain empty days");
   assert(plannerState.includes("setSelectedMemberId(nextActiveMemberId || \"all\")"), "Planner should start on the active member when available");
   assert(plannerState.includes("setSelectedMemberId(memberId)") && plannerState.includes("setView(\"today\")"), "Active member switching should return to today and personal scope");
   assert(week.includes("modeSummary"), "Week summary should follow selected week mode");

@@ -135,16 +135,22 @@ export function WeekScreen({
       )}
 
       {mode === "days" &&
-        days.map((day) => (
-          <View key={day} style={styles.daySection}>
-            <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>{day}</Text>
-            {weekAssignments
-              .filter((assignment) => assignment.day === day)
-              .map((assignment) => (
+        days.map((day) => {
+          const dayAssignments = weekAssignments.filter((assignment) => assignment.day === day);
+          return (
+            <View key={day} style={styles.daySection}>
+              <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>{day}</Text>
+              {!dayAssignments.length && (
+                <View style={[styles.emptyStateCard, themed.soft]}>
+                  <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Keine Aufgaben geplant.</Text>
+                </View>
+              )}
+              {dayAssignments.map((assignment) => (
                 <WeekAssignmentLine key={assignment.id} assignment={assignment} tasks={tasks} members={members} darkMode={darkMode} />
               ))}
-          </View>
-        ))}
+            </View>
+          );
+        })}
     </View>
   );
 }

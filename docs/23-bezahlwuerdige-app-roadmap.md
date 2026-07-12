@@ -62,8 +62,8 @@ Ziel: Homely soll nicht nur Aufgaben verwalten, sondern Alltagsstress reduzieren
 ## 7. Polierte Details
 
 - Undo nach Aufgaben-Loeschen ist vorhanden und stellt Zuordnungen wieder her.
-- Lade-, Fehler- und Leerzustaende fuer alle Hauptflows.
-- Offline-/Sync-Konflikte verstaendlich erklaeren.
+- Lade-, Fehler- und Leerzustaende fuer Hauptflows sind sichtbar: Heute, Woche und Sync.
+- Offline-/Sync-Konflikte werden im Kopfbereich ruhig erklaert; lokale Aenderungen bleiben nachvollziehbar.
 - Keine Textueberlaeufe auf Samsung-Groessen.
 - App-Version, Diagnose und Release-Check bleiben sichtbar fuer Tests.
 

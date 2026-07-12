@@ -37,6 +37,7 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 - `Plan hochladen` speichert Mitglieder, Aufgaben, Zuordnungen und Essen.
 - `Plan laden` springt auf `Heute` und zeigt den Supabase-Stand.
 - Der Status-Chip zeigt `Plan aus Supabase geladen` oder `... gespeichert`.
+- Bei Sync-Fehlern zeigt der Kopfbereich einen ruhigen Hinweis, dass lokale Aenderungen erhalten bleiben.
 - Nach App-Neustart bleibt der aktive Sync-Haushalt gesetzt.
 
 ## Aufgaben
@@ -52,6 +53,7 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 - Aufgabe loeschen verschwindet nach `Plan laden`.
 - Direkt nach dem Loeschen kann `Rueckgaengig` die Aufgabe inklusive Zuordnungen wiederherstellen.
 - Aufgaben-Langzeituebersicht zeigt kommende Wochen und nicht nur die aktuelle KW.
+- Wochenansicht zeigt fuer leere Tage einen klaren Leerzustand statt eines leeren Abschnitts.
 
 ## Essensplan
 

@@ -55,6 +55,18 @@ export function Hero({
         : syncStatus.state === "synced"
           ? { backgroundColor: palette.soft, borderColor: palette.primary, color: palette.primary }
           : { backgroundColor: palette.paper, borderColor: palette.border, color: palette.muted };
+  const syncNotice =
+    syncStatus.state === "error"
+      ? {
+          title: "Cloud-Sync pruefen",
+          copy: "Lokale Aenderungen bleiben erhalten. Tippe auf Aktualisieren oder pruefe den Cloud-Bereich unter Mehr.",
+        }
+      : syncStatus.state === "syncing"
+        ? {
+            title: "Cloud wird abgeglichen",
+            copy: "Homely speichert oder laedt gerade Daten. Du kannst lokal weiterarbeiten.",
+          }
+        : null;
 
   return (
     <View style={[styles.panel, darkMode && styles.panelDark, panelTheme]}>
@@ -92,6 +104,12 @@ export function Hero({
           <Text style={[styles.syncText, { color: syncTone.color }]}>Aktualisieren</Text>
         )}
       </TouchableOpacity>
+      {syncNotice && (
+        <View style={[styles.statusNotice, { backgroundColor: syncTone.backgroundColor, borderColor: syncTone.borderColor }]}>
+          <Text style={[styles.taskTitle, { color: syncTone.color }]}>{syncNotice.title}</Text>
+          <Text style={[styles.taskMeta, { color: syncTone.color }]}>{syncNotice.copy}</Text>
+        </View>
+      )}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.rowScroll}>
         {days.map((day) => {
           const active = selectedDay === day;

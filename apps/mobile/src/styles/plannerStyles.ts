@@ -61,6 +61,7 @@ export const styles = StyleSheet.create({
   syncPill: { alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 7, borderRadius: 999, borderWidth: 1, paddingHorizontal: 10, paddingVertical: 6 },
   syncDot: { width: 8, height: 8, borderRadius: 4 },
   syncText: { fontSize: 12, fontWeight: "900" },
+  statusNotice: { alignSelf: "stretch", borderRadius: 8, borderWidth: 1, padding: 10, gap: 4 },
   rowScroll: { marginHorizontal: -2 },
   dayButton: { minWidth: 76, borderRadius: 8, backgroundColor: "#fffaf2", borderWidth: 1, borderColor: "#ded6ca", padding: 9, marginRight: 8 },
   dayButtonActive: { backgroundColor: brand.primary, borderColor: brand.primary },
