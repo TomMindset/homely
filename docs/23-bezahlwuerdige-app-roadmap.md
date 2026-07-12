@@ -62,7 +62,8 @@ Aktueller Umsetzungsabgleich: siehe `docs/25-7-konzepte-status.md`.
 - Homely braucht Planung ueber die aktuelle Woche hinaus.
 - Aufgaben-Langzeituebersicht zeigt die kommenden 12 Wochen aus dem vollstaendigen Plan.
 - Wiederholungen: taeglich, Wochentage, alle X Wochen, monatlich, jaehrlich sind fuer eigene Aufgaben umgesetzt.
-- Besonderheiten: Urlaub, Ferien, saisonale Aufgaben, Muelltermine.
+- Muelltermine koennen als Aufgabenserie mit Tonnenart, Rhythmus, Wochentag/Monatstag und Erinnerung angelegt werden.
+- Besonderheiten danach: Urlaub, Ferien und saisonale Aufgaben.
 - UX-Regel: Tagesansicht bleibt leicht, Kalender ist ein Verwalter-Werkzeug.
 
 ## 7. Polierte Details
@@ -98,5 +99,5 @@ Umsetzungsregel:
 1. Migration `0012_notification_dispatch_expansion.sql` ausfuehren und `send-task-reminders` neu deployen.
 2. Aktuellen Stand auf Samsung testen: Heute, Aufgaben, Fairness, Essen, Mehr, Push-Test, Ueberfaellig-Push, Haushaltsstatus und Sync.
 3. Wiederverwendbare UI-Zustaende und Offline-/Konfliktlogik vereinheitlichen.
-4. Manuelle Kalenderereignisse fuer Muell als Aufgabenserie konzipieren und umsetzen.
+4. Urlaub/Ferien als Anzeige und spaeter als Aufgaben-Ausnahme konzipieren.
 5. Polish-Schicht pro Release.

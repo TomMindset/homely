@@ -51,6 +51,8 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 - Aufgabe bearbeiten speichert Titel, Punkte und Wiederholung.
 - Wiederholungen `alle X Wochen`, `monatlich` und `jaehrlich` erzeugen sichtbare Zukunftstermine in der Langzeituebersicht.
 - Nach `Plan hochladen` und `Plan laden` bleiben Intervall, Monat und Tag der Wiederholung erhalten.
+- Muelltermin anlegen erzeugt eine wiederkehrende Aufgabe mit passendem Rhythmus, Erinnerung und Zuordnung.
+- Muelltermin bleibt nach `Plan hochladen` und `Plan laden` erhalten.
 - `Uebliche Zustaendigkeit` setzt offene Termine einer Aufgabe ab der gewaehlten KW auf eine Standardperson.
 - Bereits erledigte Aufgaben werden durch `Uebliche Zustaendigkeit` nicht veraendert.
 - Beim Bearbeiten zeigt `Fair verteilen` einen bestaetigungspflichtigen Vorschlag nach aktueller Wochenlast.

@@ -94,12 +94,13 @@ Erfuellt:
 - Essensplan hat eine langfristige Sicht.
 - Eigene Aufgaben koennen `alle X Wochen`, monatlich und jaehrlich geplant werden.
 - Intervall, Tag und Monat werden lokal gespeichert und ueber Supabase-Sync vorbereitet.
+- Muelltermine koennen als normale wiederkehrende Aufgabenserie angelegt werden.
 - Tagesansicht bleibt leicht, Langzeitplanung ist als Verwalterwerkzeug angelegt.
 
 Offen:
 
 - Monats- und Jahreskalender fehlen noch.
-- Urlaub, Ferien, saisonale Aufgaben und Muelltermine fehlen noch.
+- Urlaub, Ferien und saisonale Aufgaben fehlen noch.
 - Langfristige Planung braucht spaeter Filter nach Person, Aufgabe und Haushalt.
 - Optionale Erweiterung ist konzipiert: Muelltermine als Terminserien, Urlaub/Ferien als Sperrzeiten mit Planverschiebung oder Pausierung.
 
@@ -126,4 +127,4 @@ Offen:
 1. Migration `0012_notification_dispatch_expansion.sql` ausfuehren und `send-task-reminders` neu deployen.
 2. Geraetetest mit aktuellem Stand: Heute, Aufgaben, Fairness, Essen, Mehr, Push-Test, Ueberfaellig-Push, Haushaltsstatus und Sync.
 3. Wiederverwendbare UI-Zustaende und Offline-/Konfliktlogik vereinheitlichen.
-4. Manuelle Kalenderereignisse fuer Muell als Aufgabenserie vorbereiten.
+4. Urlaub/Ferien als Anzeige und spaeter als Aufgaben-Ausnahme vorbereiten.

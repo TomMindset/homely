@@ -135,6 +135,7 @@ export const categoryLabels: Record<string, string> = {
   weekly: "Woechentlich",
   long_term: "Langfristig",
   custom: "Eigene Aufgabe",
+  waste: "Muell",
 };
 
 export const days: DayName[] = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];

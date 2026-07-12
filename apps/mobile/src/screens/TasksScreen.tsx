@@ -28,6 +28,17 @@ type TaskUpdateOptions = {
   reminderTime?: string;
 };
 
+type WasteTaskInput = {
+  title: string;
+  effortUnits: number;
+  recurrenceType: NewTaskScheduleType;
+  scheduledDays: DayName[];
+  recurrenceIntervalWeeks?: number;
+  recurrenceDayOfMonth?: number;
+  reminderOptionId?: ReminderOptionId;
+  reminderTime?: string;
+};
+
 type FairAssignmentSuggestion = {
   assignmentId: string;
   memberId: string;
@@ -36,6 +47,26 @@ type FairAssignmentSuggestion = {
   beforeUnits: number;
   projectedUnits: number;
 };
+
+const wastePresets = [
+  { id: "rest", label: "Restmuell", title: "Restmuell rausstellen", effortUnits: 1 },
+  { id: "bio", label: "Bio", title: "Biotonne rausstellen", effortUnits: 1 },
+  { id: "paper", label: "Papier", title: "Papiertonne rausstellen", effortUnits: 1 },
+  { id: "yellow", label: "Gelbe Tonne", title: "Gelbe Tonne rausstellen", effortUnits: 1 },
+  { id: "glass", label: "Glas", title: "Altglas wegbringen", effortUnits: 1 },
+];
+
+const wasteRhythms: Array<{
+  id: "weekly" | "two_weeks" | "four_weeks" | "monthly";
+  label: string;
+  recurrenceType: NewTaskScheduleType;
+  intervalWeeks?: number;
+}> = [
+  { id: "weekly", label: "Woechentlich", recurrenceType: "weekly_days" },
+  { id: "two_weeks", label: "Alle 2 Wochen", recurrenceType: "every_x_weeks", intervalWeeks: 2 },
+  { id: "four_weeks", label: "Alle 4 Wochen", recurrenceType: "every_x_weeks", intervalWeeks: 4 },
+  { id: "monthly", label: "Monatlich", recurrenceType: "monthly" },
+];
 
 function buildFairAssignmentPlan(
   taskAssignments: Assignment[],
@@ -153,6 +184,143 @@ function RecurrenceDetailFields({
   );
 }
 
+function WasteSeriesBuilder({
+  darkMode,
+  canManagePlan,
+  selectedWeek,
+  addWasteTask,
+}: {
+  darkMode: boolean;
+  canManagePlan: boolean;
+  selectedWeek: number;
+  addWasteTask: (input: WasteTaskInput) => void;
+}) {
+  const themed = useThemeStyles(darkMode);
+  const [presetId, setPresetId] = useState(wastePresets[0].id);
+  const [rhythmId, setRhythmId] = useState<(typeof wasteRhythms)[number]["id"]>("two_weeks");
+  const [day, setDay] = useState<DayName>("Montag");
+  const [dayOfMonth, setDayOfMonth] = useState("1");
+  const [reminderOptionId, setReminderOptionId] = useState<ReminderOptionId>("day_before");
+  const [reminderTime, setReminderTime] = useState("18:00");
+  const preset = wastePresets.find((item) => item.id === presetId) ?? wastePresets[0];
+  const rhythm = wasteRhythms.find((item) => item.id === rhythmId) ?? wasteRhythms[1];
+
+  function createWasteTask() {
+    addWasteTask({
+      title: preset.title,
+      effortUnits: preset.effortUnits,
+      recurrenceType: rhythm.recurrenceType,
+      scheduledDays: [day],
+      recurrenceIntervalWeeks: rhythm.intervalWeeks,
+      recurrenceDayOfMonth: Number(dayOfMonth),
+      reminderOptionId,
+      reminderTime,
+    });
+  }
+
+  return (
+    <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
+      <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Muelltermine</Text>
+      <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
+        Als Aufgabenserie ab KW {selectedWeek}, mit Erinnerung und normaler Zuordnung.
+      </Text>
+      <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Art</Text>
+      <View style={styles.segmentedWrap}>
+        {wastePresets.map((item) => {
+          const active = presetId === item.id;
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.segmentButtonCompact, themed.buttonSurface, active && themed.active, !canManagePlan && styles.disabledButton]}
+              disabled={!canManagePlan}
+              accessibilityRole="button"
+              accessibilityLabel={`Muelltermin ${item.label}`}
+              accessibilityState={{ selected: active, disabled: !canManagePlan }}
+              onPress={() => setPresetId(item.id)}
+            >
+              <Text style={[styles.segmentButtonText, themed.muted, active && styles.segmentButtonTextActive]}>{item.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+      <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Rhythmus</Text>
+      <View style={styles.segmentedWrap}>
+        {wasteRhythms.map((item) => {
+          const active = rhythmId === item.id;
+          return (
+            <TouchableOpacity
+              key={item.id}
+              style={[styles.segmentButtonCompact, themed.buttonSurface, active && themed.active, !canManagePlan && styles.disabledButton]}
+              disabled={!canManagePlan}
+              accessibilityRole="button"
+              accessibilityLabel={`Muellrhythmus ${item.label}`}
+              accessibilityState={{ selected: active, disabled: !canManagePlan }}
+              onPress={() => setRhythmId(item.id)}
+            >
+              <Text style={[styles.segmentButtonText, themed.muted, active && styles.segmentButtonTextActive]}>{item.label}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+      {rhythm.recurrenceType === "monthly" ? (
+        <View style={styles.quietTimeField}>
+          <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Tag im Monat</Text>
+          <TextInput
+            style={[styles.input, themed.input, darkMode && styles.inputDark]}
+            value={dayOfMonth}
+            onChangeText={setDayOfMonth}
+            keyboardType="numeric"
+            editable={canManagePlan}
+            accessibilityLabel="Tag im Monat fuer Muelltermin"
+            placeholder="1-31"
+            placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
+          />
+        </View>
+      ) : (
+        <>
+          <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Wochentag</Text>
+          <View style={styles.dayToggleGrid}>
+            {days.map((item) => {
+              const active = day === item;
+              return (
+                <TouchableOpacity
+                  key={item}
+                  style={[styles.dayToggle, themed.buttonSurface, active && themed.active, !canManagePlan && styles.disabledButton]}
+                  disabled={!canManagePlan}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Muelltermin am ${item}`}
+                  accessibilityState={{ selected: active, disabled: !canManagePlan }}
+                  onPress={() => setDay(item)}
+                >
+                  <Text style={[styles.dayToggleText, themed.muted, active && styles.dayToggleTextActive]}>{item.slice(0, 2)}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        </>
+      )}
+      <ReminderControls
+        optionId={reminderOptionId}
+        setOptionId={setReminderOptionId}
+        time={reminderTime}
+        setTime={setReminderTime}
+        darkMode={darkMode}
+        canManagePlan={canManagePlan}
+      />
+      <TouchableOpacity
+        style={[styles.primaryAction, themed.primary, !canManagePlan && styles.disabledButton]}
+        disabled={!canManagePlan}
+        accessibilityRole="button"
+        accessibilityLabel={`${preset.title} als Aufgabenserie anlegen`}
+        accessibilityState={{ disabled: !canManagePlan }}
+        onPress={createWasteTask}
+      >
+        <Text style={[styles.primaryActionText, !canManagePlan && styles.disabledText]}>Muelltermin anlegen</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 export function TasksScreen({
   tasks,
   darkMode,
@@ -176,6 +344,7 @@ export function TasksScreen({
   setNewReminderTime,
   canManagePlan,
   addTask,
+  addWasteTask,
   applyTaskDefaultMember,
   updateTask,
   deleteTask,
@@ -211,6 +380,7 @@ export function TasksScreen({
   setNewReminderTime: (value: string) => void;
   canManagePlan: boolean;
   addTask: () => void;
+  addWasteTask: (input: WasteTaskInput) => void;
   applyTaskDefaultMember: (taskId: string, memberId: string, fromWeek: number) => void;
   updateTask: (taskId: string, title: string, effortUnits: number, ruleUpdate?: TaskUpdateOptions) => void;
   deleteTask: (taskId: string) => void;
@@ -345,6 +515,14 @@ export function TasksScreen({
             })}
           </View>
         </View>
+      )}
+      {canManagePlan && (
+        <WasteSeriesBuilder
+          darkMode={darkMode}
+          canManagePlan={canManagePlan}
+          selectedWeek={selectedWeek}
+          addWasteTask={addWasteTask}
+        />
       )}
       <TextInput
         style={[styles.input, themed.input, darkMode && styles.inputDark]}

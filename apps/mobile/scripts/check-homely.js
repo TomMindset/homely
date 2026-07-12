@@ -519,6 +519,8 @@ check("professional MVP UI gates are wired", () => {
   assert(tasks.includes("Zuordnung in KW"), "Task editing should expose assignment controls");
   assert(plannerState.includes("applyTaskDefaultMember") && tasks.includes("Uebliche Zustaendigkeit"), "Task editing should support usual/default assignees");
   assert(tasks.includes("buildFairAssignmentPlan") && tasks.includes("Fair verteilen"), "Task editing should offer fair assignment suggestions");
+  assert(plannerState.includes("addWasteTask") && tasks.includes("WasteSeriesBuilder") && tasks.includes("Muelltermine"), "Tasks should offer waste pickup series as recurring task templates");
+  assert(app.includes("addWasteTask={planner.addWasteTask}"), "App should wire waste pickup creation into Tasks");
   assert(plannerState.includes("undoDeleteTask") && tasks.includes("Rueckgaengig"), "Task deletion should expose undo");
   assert(tasks.includes("taskEditorCard"), "Task editing should use a dedicated full-width editor card");
   assert(tasks.includes("templateSummary") && tasks.includes("templateActions"), "Task rows should separate summary and actions to avoid narrow overflow");

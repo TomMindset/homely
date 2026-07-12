@@ -76,6 +76,17 @@ type TaskRuleUpdate = {
   reminderTime?: string;
 };
 
+type WasteTaskInput = {
+  title: string;
+  effortUnits: number;
+  recurrenceType: NewTaskScheduleType;
+  scheduledDays: DayName[];
+  recurrenceIntervalWeeks?: number;
+  recurrenceDayOfMonth?: number;
+  reminderOptionId?: ReminderOptionId;
+  reminderTime?: string;
+};
+
 type AssignmentSummary = {
   total: number;
   done: number;
@@ -1149,6 +1160,75 @@ export function usePlannerState() {
     setNewReminderTime("18:00");
   }
 
+  function addWasteTask(input: WasteTaskInput) {
+    if (!canManagePlan) return;
+    const defaultMemberId = activeMember?.id ?? members[0]?.id;
+    const title = input.title.trim();
+    const units = Number(input.effortUnits);
+    if (!title || !Number.isFinite(units) || units <= 0 || !defaultMemberId) return;
+
+    const scheduledDays =
+      input.recurrenceType === "weekly_days" || input.recurrenceType === "every_x_weeks"
+        ? input.scheduledDays.length
+          ? input.scheduledDays
+          : [selectedDay]
+        : [input.scheduledDays[0] ?? selectedDay];
+    const reminderOption = reminderOptions.find((option) => option.id === input.reminderOptionId) ?? reminderOptions[0];
+    const recurrenceIntervalWeeks = normalizeWeekInterval(input.recurrenceIntervalWeeks);
+    const recurrenceDayOfMonth = normalizeDayOfMonth(input.recurrenceDayOfMonth);
+
+    const taskId = `waste-${Date.now()}`;
+    const task: TaskTemplate = {
+      id: taskId,
+      title,
+      category: "waste",
+      effortUnits: units,
+      source: "custom",
+      recurrenceType: input.recurrenceType,
+      scheduledDays,
+      recurrenceLabel: scheduleLabel(input.recurrenceType, scheduledDays, {
+        intervalWeeks: recurrenceIntervalWeeks,
+        dayOfMonth: recurrenceDayOfMonth,
+      }),
+      recurrenceStartYear: seedData.family.year,
+      recurrenceStartWeek: selectedWeek,
+      recurrenceIntervalWeeks,
+      recurrenceDayOfMonth,
+      reminderEnabled: reminderOption.enabled,
+      reminderLeadDays: reminderOption.leadDays,
+      reminderTime: input.reminderTime?.trim() || "18:00",
+    };
+    const newAssignments = buildCustomTaskAssignments({
+      task,
+      startWeek: selectedWeek,
+      fallbackDay: scheduledDays[0] ?? selectedDay,
+      memberId: selectedMemberId === "all" ? defaultMemberId : selectedMemberId,
+    });
+
+    setCustomTasks((items) => {
+      const updated = [...items, task];
+      setStoredItem(storageKeys.customTasks, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
+    setAssignments((items) => {
+      const updated = [...items, ...newAssignments];
+      setStoredItem(
+        storageKeys.customAssignments,
+        JSON.stringify(updated.filter((item) => item.source === "custom")),
+      ).catch(() => {});
+      if (activeRemoteHouseholdId) {
+        runRemoteSync("Muelltermin", () =>
+          upsertRemoteTaskWithAssignments({
+            householdId: activeRemoteHouseholdId,
+            task,
+            assignments: updated,
+          }),
+        );
+      }
+      return updated;
+    });
+  }
+
   function restoreDefaultTasks() {
     if (!canManagePlan) return;
     setDeletedTaskIds([]);
@@ -1255,6 +1335,7 @@ export function usePlannerState() {
     accountEmail,
     addMember,
     addTask,
+    addWasteTask,
     activateTaskPackage,
     activeMember,
     activeMemberId: activeMember?.id ?? activeMemberId,

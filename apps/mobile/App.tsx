@@ -180,6 +180,7 @@ export default function App() {
               setNewReminderTime={planner.setNewReminderTime}
               canManagePlan={planner.canManagePlan}
               addTask={planner.addTask}
+              addWasteTask={planner.addWasteTask}
               applyTaskDefaultMember={planner.applyTaskDefaultMember}
               updateTask={planner.updateTask}
               deleteTask={planner.deleteTask}
