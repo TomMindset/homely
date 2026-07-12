@@ -6,6 +6,97 @@ import { styles } from "../styles/plannerStyles";
 import { useThemeStyles } from "../theme/useThemeStyles";
 import { Assignment, MealPlanEntry, Member, TaskTemplate, getRuleByTaskId, getTaskById, ruleLabel } from "../utils/planner";
 
+type TodayGroupId = "now" | "later" | "done";
+
+type TodayGroup = {
+  id: TodayGroupId;
+  title: string;
+  detail: string;
+  assignments: Assignment[];
+};
+
+function localDateKey(date: Date) {
+  const year = date.getFullYear();
+  const month = `${date.getMonth() + 1}`.padStart(2, "0");
+  const day = `${date.getDate()}`.padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function parseReminderTime(value?: string) {
+  const time = typeof value === "string" && /^([01][0-9]|2[0-3]):[0-5][0-9]$/.test(value) ? value : "18:00";
+  const [hours, minutes] = time.split(":").map(Number);
+  return { hours, minutes };
+}
+
+function reminderDueAt(assignment: Assignment, task?: TaskTemplate) {
+  if (!task?.reminderEnabled || !assignment.date) return null;
+  const { hours, minutes } = parseReminderTime(task.reminderTime);
+  const due = new Date(`${assignment.date}T00:00:00`);
+  due.setDate(due.getDate() - Math.max(task.reminderLeadDays ?? 0, 0));
+  due.setHours(hours, minutes, 0, 0);
+  return due;
+}
+
+function sortAssignmentsForToday(assignments: Assignment[], tasks: TaskTemplate[]) {
+  return [...assignments].sort((left, right) => {
+    const leftTask = getTaskById(tasks, left.taskId);
+    const rightTask = getTaskById(tasks, right.taskId);
+    const leftDue = reminderDueAt(left, leftTask)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    const rightDue = reminderDueAt(right, rightTask)?.getTime() ?? Number.MAX_SAFE_INTEGER;
+    if (leftDue !== rightDue) return leftDue - rightDue;
+    return (leftTask?.title ?? "").localeCompare(rightTask?.title ?? "");
+  });
+}
+
+function groupTodayAssignments(assignments: Assignment[], tasks: TaskTemplate[], now = new Date()): TodayGroup[] {
+  const todayKey = localDateKey(now);
+  const nowImportant: Assignment[] = [];
+  const laterToday: Assignment[] = [];
+  const done: Assignment[] = [];
+
+  assignments.forEach((assignment) => {
+    if (assignment.status === "done") {
+      done.push(assignment);
+      return;
+    }
+
+    const task = getTaskById(tasks, assignment.taskId);
+    const dueAt = reminderDueAt(assignment, task);
+    const isFutureDate = assignment.date > todayKey;
+    const isLaterReminder = dueAt ? dueAt.getTime() > now.getTime() : false;
+
+    if (isFutureDate || isLaterReminder) {
+      laterToday.push(assignment);
+      return;
+    }
+
+    nowImportant.push(assignment);
+  });
+
+  const groups: TodayGroup[] = [
+    {
+      id: "now",
+      title: "Jetzt wichtig",
+      detail: `${nowImportant.length} dran`,
+      assignments: sortAssignmentsForToday(nowImportant, tasks),
+    },
+    {
+      id: "later",
+      title: "Spaeter heute",
+      detail: `${laterToday.length} geplant`,
+      assignments: sortAssignmentsForToday(laterToday, tasks),
+    },
+    {
+      id: "done",
+      title: "Erledigt",
+      detail: `${done.length} abgehakt`,
+      assignments: sortAssignmentsForToday(done, tasks),
+    },
+  ];
+
+  return groups.filter((group) => group.assignments.length > 0);
+}
+
 export function TodayScreen({
   assignments,
   meal,
@@ -36,6 +127,7 @@ export function TodayScreen({
   const displayedAssignments = mode === "mine" ? ownAssignments : assignments;
   const displayedOpenAssignments = displayedAssignments.filter((assignment) => assignment.status !== "done");
   const displayedDoneAssignments = displayedAssignments.filter((assignment) => assignment.status === "done");
+  const todayGroups = groupTodayAssignments(displayedAssignments, tasks);
   const ownOpenAssignments = ownAssignments.filter((assignment) => assignment.status !== "done");
   const householdOpenAssignments = assignments.filter((assignment) => assignment.status !== "done");
   const otherOpenCount = householdOpenAssignments.filter((assignment) => assignment.memberId !== activeMemberId).length;
@@ -108,45 +200,25 @@ export function TodayScreen({
           </View>
         </View>
       )}
-      {!!displayedOpenAssignments.length && (
-        <View style={styles.todayListHeader}>
-          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Jetzt offen</Text>
-          <Text style={[styles.readinessBadge, themed.muted, darkMode && styles.mutedDark]}>
-            {displayedOpenAssignments.length} Aufgabe(n)
-          </Text>
+      {todayGroups.map((group) => (
+        <View key={group.id} style={styles.todayGroup}>
+          <View style={styles.todayListHeader}>
+            <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>{group.title}</Text>
+            <Text style={[styles.readinessBadge, themed.muted, darkMode && styles.mutedDark]}>{group.detail}</Text>
+          </View>
+          {group.assignments.map((assignment) => (
+            <TaskRow
+              key={assignment.id}
+              assignment={assignment}
+              task={getTaskById(tasks, assignment.taskId)}
+              member={members.find((item) => item.id === assignment.memberId)}
+              completedByMember={members.find((item) => item.id === assignment.completedByMemberId)}
+              darkMode={darkMode}
+              activeMemberId={activeMemberId}
+              toggleAssignment={toggleAssignment}
+            />
+          ))}
         </View>
-      )}
-      {displayedOpenAssignments.map((assignment) => (
-        <TaskRow
-          key={assignment.id}
-          assignment={assignment}
-          task={getTaskById(tasks, assignment.taskId)}
-          member={members.find((item) => item.id === assignment.memberId)}
-          completedByMember={members.find((item) => item.id === assignment.completedByMemberId)}
-          darkMode={darkMode}
-          activeMemberId={activeMemberId}
-          toggleAssignment={toggleAssignment}
-        />
-      ))}
-      {!!displayedDoneAssignments.length && (
-        <View style={styles.todayListHeader}>
-          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Erledigt</Text>
-          <Text style={[styles.readinessBadge, themed.muted, darkMode && styles.mutedDark]}>
-            {displayedDoneAssignments.length} abgehakt
-          </Text>
-        </View>
-      )}
-      {displayedDoneAssignments.map((assignment) => (
-        <TaskRow
-          key={assignment.id}
-          assignment={assignment}
-          task={getTaskById(tasks, assignment.taskId)}
-          member={members.find((item) => item.id === assignment.memberId)}
-          completedByMember={members.find((item) => item.id === assignment.completedByMemberId)}
-          darkMode={darkMode}
-          activeMemberId={activeMemberId}
-          toggleAssignment={toggleAssignment}
-        />
       ))}
       <View style={[styles.mealBox, darkMode && styles.mealBoxDark, themed.soft]}>
         <View style={styles.mealHeaderRow}>

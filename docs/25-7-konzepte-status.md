@@ -45,12 +45,12 @@ Erfuellt:
 - Homely startet fuer regelmaessige Nutzer auf `Heute`.
 - Normale Mitglieder sehen zuerst eigene Aufgaben und koennen auf Haushaltshilfe erweitern.
 - `Heute` zeigt offene Aufgaben, erledigte Aufgaben, offene Punkte und einen Fokus auf den aktuellen Tag.
+- `Heute` gruppiert sichtbare Aufgaben in `Jetzt wichtig`, `Spaeter heute` und `Erledigt`.
 - Sync-Fehler und technische Hinweise werden ruhiger dargestellt; lokale Aenderungen bleiben nachvollziehbar.
 - Wochenansicht und Sync haben bessere Leer- und Fehlerzustaende.
 
 Offen:
 
-- Aufgaben auf `Heute` sollten noch staerker in `Jetzt wichtig`, `Spaeter heute` und `Erledigt` gruppiert werden.
 - Technische Supabase-Texte sollten konsequent aus Konto/Alltag in Diagnose und Check verschoben werden.
 - Wiederkehrende Nutzer sollten noch weniger Einstellungen sehen, wenn sie nichts verwalten muessen.
 
@@ -123,7 +123,6 @@ Offen:
 
 1. Migration `0012_notification_dispatch_expansion.sql` ausfuehren und `send-task-reminders` neu deployen.
 2. Geraetetest mit aktuellem Stand: Heute, Aufgaben, Fairness, Essen, Mehr, Push-Test, Ueberfaellig-Push, Haushaltsstatus und Sync.
-3. Heute weiter gruppieren: `Jetzt wichtig`, `Spaeter heute`, `Erledigt`.
-4. Fairness visualisieren: Balken, Wochenverlauf, Danke-Moment.
-5. Kalenderlogik erweitern: alle X Wochen, monatlich, jaehrlich.
-6. Wiederverwendbare UI-Zustaende und Offline-/Konfliktlogik vereinheitlichen.
+3. Fairness visualisieren: Balken, Wochenverlauf, Danke-Moment.
+4. Kalenderlogik erweitern: alle X Wochen, monatlich, jaehrlich.
+5. Wiederverwendbare UI-Zustaende und Offline-/Konfliktlogik vereinheitlichen.

@@ -42,6 +42,8 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 
 ## Aufgaben
 
+- `Heute` gruppiert sichtbare Aufgaben in `Jetzt wichtig`, `Spaeter heute` und `Erledigt`.
+- Aufgaben mit spaeterer Erinnerung erscheinen unter `Spaeter heute`; Aufgaben ohne Uhrzeit oder mit faelliger Erinnerung erscheinen unter `Jetzt wichtig`.
 - Aufgabe abhaken synchronisiert den Status.
 - `Erledigt von` entspricht dem eingeloggten/aktiven Mitglied.
 - Fairness-Zuordnung auf eine andere Person wird remote gespeichert.

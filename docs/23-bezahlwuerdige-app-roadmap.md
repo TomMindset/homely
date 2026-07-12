@@ -31,6 +31,7 @@ Aktueller Umsetzungsabgleich: siehe `docs/25-7-konzepte-status.md`.
 - `Heute` ist der Standard-Startpunkt fuer regelmaessige Nutzer.
 - Normale Mitglieder sehen zuerst eigene Aufgaben.
 - `Heute` zeigt eine Fokuskarte mit offenen Aufgaben, erledigten Aufgaben, offenen Punkten und der Option, im Haushalt zu helfen.
+- `Heute` gruppiert Aufgaben in `Jetzt wichtig`, `Spaeter heute` und `Erledigt`.
 - Verwalter erhalten klare Einstellbereiche fuer Haushalt, Aufgaben, Sync, Push und Check.
 - Technische Fehler bleiben im Diagnose-/Checkbereich; Alltagstexte bleiben ruhig und konkret.
 
@@ -91,10 +92,9 @@ Umsetzungsregel:
 
 ## Prioritaet
 
-1. Aktuellen Stand auf Samsung testen: Heute, Aufgaben, Fairness, Essen, Mehr, Push-Test und Sync.
-2. Ueberfaellig- und Haushaltsstatus-Push als echte Dispatch-Faelle umsetzen.
-3. `Heute` weiter gruppieren: jetzt wichtig, spaeter heute, erledigt.
-4. Fairness visualisieren: Balken, Wochenverlauf, Danke-Moment.
-5. Kalenderlogik erweitern: alle X Wochen, monatlich, jaehrlich.
-6. Wiederverwendbare UI-Zustaende und Offline-/Konfliktlogik vereinheitlichen.
-7. Polish-Schicht pro Release.
+1. Migration `0012_notification_dispatch_expansion.sql` ausfuehren und `send-task-reminders` neu deployen.
+2. Aktuellen Stand auf Samsung testen: Heute, Aufgaben, Fairness, Essen, Mehr, Push-Test, Ueberfaellig-Push, Haushaltsstatus und Sync.
+3. Fairness visualisieren: Balken, Wochenverlauf, Danke-Moment.
+4. Kalenderlogik erweitern: alle X Wochen, monatlich, jaehrlich.
+5. Wiederverwendbare UI-Zustaende und Offline-/Konfliktlogik vereinheitlichen.
+6. Polish-Schicht pro Release.

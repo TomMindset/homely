@@ -93,6 +93,7 @@ export const styles = StyleSheet.create({
   taskMeta: { color: "#6a6259", fontSize: 12, marginTop: 4 },
   todayFocusBand: { borderRadius: 8, padding: 12, marginBottom: 12 },
   todayActionRow: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  todayGroup: { marginTop: 4, marginBottom: 4 },
   todayListHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 10, marginTop: 6, marginBottom: 8 },
   emptyStateCard: { borderRadius: 8, borderWidth: 1, borderColor: "#ded6ca", backgroundColor: brand.soft, padding: 12, marginBottom: 10, gap: 10 },
   unit: { minWidth: 42, textAlign: "center", borderRadius: 999, backgroundColor: "#f1eee8", padding: 8, fontWeight: "900" },
