@@ -469,10 +469,12 @@ check("professional MVP UI gates are wired", () => {
   assert(plannerState.includes("setSelectedMemberId(nextActiveMemberId || \"all\")"), "Planner should start on the active member when available");
   assert(plannerState.includes("setSelectedMemberId(memberId)") && plannerState.includes("setView(\"today\")"), "Active member switching should return to today and personal scope");
   assert(week.includes("modeSummary"), "Week summary should follow selected week mode");
-  assert(app.includes("assignments={planner.weekAssignments}") && fairness.includes("KW {selectedWeek}"), "Fairness should render only the selected week");
+  assert(app.includes("assignments={planner.weekAssignments}") && app.includes("allAssignments={planner.assignments}"), "Fairness should receive week and trend assignments");
   assert(fairness.includes("useMemo") && fairness.includes("taskById"), "Fairness should memoize task lookups");
   assert(fairness.includes("FairnessInsight") && fairness.includes("Entlastungsvorschlag"), "Fairness should explain balance and suggest relief");
   assert(fairness.includes("Im Ziel") && fairness.includes("Traegt mehr") && fairness.includes("Hat Luft"), "Fairness should classify member load");
+  assert(fairness.includes("FairnessMetricBar") && fairness.includes("Wochenverlauf"), "Fairness should visualize bars and weekly trend");
+  assert(today.includes("Danke-Moment") && plannerState.includes("lastCompletionPraise"), "Completed tasks should create a small thanks moment");
   assert(settings.includes("Fairness & Motivation"), "Settings should describe fairness readiness");
   assert(meals.includes("Tauschen aktiv") && meals.includes("longterm"), "Meals should support long-term swap workflow");
   assert(plannerState.includes("restoreDefaultTasks"), "Planner state should restore default task templates");

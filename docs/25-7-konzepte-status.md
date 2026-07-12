@@ -76,14 +76,14 @@ Offen:
 Erfuellt:
 
 - Fairness zeigt Soll, Plan und Ist je Person.
+- Fairness zeigt Soll, Plan und Ist je Person als Balken.
 - Homely klassifiziert Lasten und formuliert Hinweise entlastend statt beschuldigend.
 - Verwalter sehen Diagnose und optionalen Entlastungsvorschlag.
+- Wochenverlauf zeigt die Spanne der letzten sichtbaren Wochen.
+- Nach erledigten Aufgaben erscheint ein kurzer Danke-Moment im Heute-Flow.
 
 Offen:
 
-- Balkenvisualisierung fuer Soll/Ist/Punkte fehlt noch.
-- Verlauf ueber mehrere Wochen fehlt noch.
-- Ein Danke-Moment nach erledigten Aufgaben fehlt noch, z. B. `Stark, das entlastet Sonja heute`.
 - Fairness sollte noch staerker als emotionales Versprechen im Alltag auftauchen, nicht nur im Fairness-Tab.
 
 ## 6. Kalender- und Jahresmodus: teilweise erfuellt
@@ -123,6 +123,5 @@ Offen:
 
 1. Migration `0012_notification_dispatch_expansion.sql` ausfuehren und `send-task-reminders` neu deployen.
 2. Geraetetest mit aktuellem Stand: Heute, Aufgaben, Fairness, Essen, Mehr, Push-Test, Ueberfaellig-Push, Haushaltsstatus und Sync.
-3. Fairness visualisieren: Balken, Wochenverlauf, Danke-Moment.
-4. Kalenderlogik erweitern: alle X Wochen, monatlich, jaehrlich.
-5. Wiederverwendbare UI-Zustaende und Offline-/Konfliktlogik vereinheitlichen.
+3. Kalenderlogik erweitern: alle X Wochen, monatlich, jaehrlich.
+4. Wiederverwendbare UI-Zustaende und Offline-/Konfliktlogik vereinheitlichen.

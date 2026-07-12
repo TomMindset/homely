@@ -118,6 +118,7 @@ export default function App() {
               members={planner.members}
               darkMode={planner.darkMode}
               activeMemberId={planner.activeMemberId}
+              completionPraise={planner.lastCompletionPraise}
               canManagePlan={planner.canManagePlan}
               setView={planner.setView}
               toggleAssignment={planner.toggleAssignment}
@@ -136,6 +137,7 @@ export default function App() {
           {planner.view === "fairness" && (
             <FairnessScreen
               assignments={planner.weekAssignments}
+              allAssignments={planner.assignments}
               tasks={planner.tasks}
               members={planner.members}
               darkMode={planner.darkMode}

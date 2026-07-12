@@ -267,6 +267,7 @@ export function usePlannerState() {
   const [deletedTaskIds, setDeletedTaskIds] = useState<string[]>([]);
   const [customTasks, setCustomTasks] = useState<TaskTemplate[]>([]);
   const [lastDeletedTask, setLastDeletedTask] = useState<DeletedTaskSnapshot | null>(null);
+  const [lastCompletionPraise, setLastCompletionPraise] = useState("");
   const [mealOverrides, setMealOverrides] = useState<Record<string, Partial<MealPlanEntry>>>({});
   const [familyName, setFamilyNameState] = useState(defaultHouseholdName);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
@@ -503,6 +504,20 @@ export function usePlannerState() {
     setAssignments((items) => {
       const currentAssignment = items.find((assignment) => assignment.id === id);
       const nextStatus: Assignment["status"] = currentAssignment?.status === "done" ? "open" : "done";
+      if (currentAssignment && nextStatus === "done") {
+        const task = tasks.find((item) => item.id === currentAssignment.taskId);
+        const completedById = completedByMemberId ?? currentAssignment.memberId;
+        const completedBy = members.find((member) => member.id === completedById);
+        const assignedMember = members.find((member) => member.id === currentAssignment.memberId);
+        const taskText = task?.title ? `"${task.title}"` : "Die Aufgabe";
+        setLastCompletionPraise(
+          completedBy && assignedMember && completedBy.id !== assignedMember.id
+            ? `Danke, ${completedBy.name}. Du entlastest ${assignedMember.name} bei ${taskText}.`
+            : `Danke, ${completedBy?.name ?? "das ist erledigt"}. ${taskText} bringt euren Haushalt voran.`,
+        );
+      } else {
+        setLastCompletionPraise("");
+      }
       const updated = items.map((assignment) =>
         assignment.id === id
           ? {
@@ -1122,6 +1137,7 @@ export function usePlannerState() {
     setDeletedTaskIds([]);
     setCustomTasks([]);
     setLastDeletedTask(null);
+    setLastCompletionPraise("");
     setMealOverrides({});
     setFamilyNameState(defaultHouseholdName);
     setActiveMemberIdState("");
@@ -1163,6 +1179,7 @@ export function usePlannerState() {
     founderMemberId: founderMember?.id ?? "",
     hiddenDefaultTaskCount,
     lastDeletedTaskTitle: lastDeletedTask?.task.title ?? "",
+    lastCompletionPraise,
     meals,
     members,
     newTitle,

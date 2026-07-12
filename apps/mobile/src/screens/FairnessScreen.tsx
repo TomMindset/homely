@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ScrollView, Text, TouchableOpacity, View, type DimensionValue } from "react-native";
 import { formatUnits } from "../constants/planner";
 import { styles } from "../styles/plannerStyles";
 import { useThemeStyles } from "../theme/useThemeStyles";
@@ -14,8 +14,13 @@ type MemberFairnessSummary = {
   statusCopy: string;
 };
 
+function percentWidth(value: number): DimensionValue {
+  return `${Math.max(5, Math.min(100, value))}%` as DimensionValue;
+}
+
 export function FairnessScreen({
   assignments,
+  allAssignments,
   tasks,
   members,
   darkMode,
@@ -24,6 +29,7 @@ export function FairnessScreen({
   updateAssignmentMember,
 }: {
   assignments: Assignment[];
+  allAssignments: Assignment[];
   tasks: TaskTemplate[];
   members: Member[];
   darkMode: boolean;
@@ -129,6 +135,39 @@ export function FairnessScreen({
       }),
     [assignments, taskById],
   );
+  const weeklyTrend = useMemo(() => {
+    const startWeek = selectedWeek - 3;
+    const memberIds = new Set(members.map((member) => member.id));
+    const weeks = [...new Set(allAssignments.map((assignment) => assignment.week))]
+      .filter((week) => week >= startWeek && week <= selectedWeek)
+      .sort((first, second) => first - second);
+
+    return weeks.map((week) => {
+      const weekItems = allAssignments.filter((assignment) => assignment.week === week);
+      const actualUnitsByMember = new Map(members.map((member) => [member.id, 0]));
+      let totalUnits = 0;
+
+      weekItems.forEach((assignment) => {
+        const task = taskById.get(assignment.taskId);
+        if (!task) return;
+        const rawActualMemberId = assignment.status === "done" ? assignment.completedByMemberId || assignment.memberId : assignment.memberId;
+        const actualMemberId = memberIds.has(rawActualMemberId) ? rawActualMemberId : assignment.memberId;
+        if (!memberIds.has(actualMemberId)) return;
+        totalUnits += task.effortUnits;
+        actualUnitsByMember.set(actualMemberId, (actualUnitsByMember.get(actualMemberId) ?? 0) + task.effortUnits);
+      });
+
+      const memberUnits = [...actualUnitsByMember.values()];
+      const spreadUnits = memberUnits.length ? Math.max(...memberUnits) - Math.min(...memberUnits) : 0;
+      const targetUnits = members.length ? totalUnits / members.length : 0;
+      return {
+        week,
+        totalUnits,
+        spreadUnits,
+        balanced: spreadUnits <= Math.max(1, targetUnits * 0.2),
+      };
+    });
+  }, [allAssignments, members, selectedWeek, taskById]);
   const themed = useThemeStyles(darkMode);
 
   return (
@@ -155,6 +194,7 @@ export function FairnessScreen({
       />
       {fairness.summaries.map((summary) => {
         const { member, plannedUnits, actualUnits, delta } = summary;
+        const barMaxUnits = Math.max(fairness.targetUnits, plannedUnits, actualUnits, 1);
         return (
           <View key={member.id} style={[styles.scoreCard, darkMode && styles.rowDark, themed.card]}>
             <View style={styles.scoreHeader}>
@@ -172,9 +212,39 @@ export function FairnessScreen({
               <Text style={[styles.scoreDetail, themed.muted, darkMode && styles.mutedDark]}>Plan {formatUnits(plannedUnits)}</Text>
               <Text style={[styles.scoreDetailStrong, themed.text, darkMode && styles.textDark]}>Ist {formatUnits(actualUnits)}</Text>
             </View>
+            <View style={styles.fairnessBarGroup}>
+              <FairnessMetricBar label="Soll" value={fairness.targetUnits} maxValue={barMaxUnits} color="#94a3b8" darkMode={darkMode} />
+              <FairnessMetricBar label="Plan" value={plannedUnits} maxValue={barMaxUnits} color="#2563eb" darkMode={darkMode} />
+              <FairnessMetricBar label="Ist" value={actualUnits} maxValue={barMaxUnits} color={member.color} darkMode={darkMode} />
+            </View>
           </View>
         );
       })}
+      {!!weeklyTrend.length && (
+        <View style={[styles.fairnessInsightBand, themed.soft]}>
+          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Wochenverlauf</Text>
+          <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
+            Die Spanne zeigt, wie weit die Ist-Punkte der Mitglieder auseinanderliegen.
+          </Text>
+          {weeklyTrend.map((item) => (
+            <View key={item.week} style={[styles.weekTrendRow, themed.card]}>
+              <Text style={[styles.scoreUnits, themed.text, darkMode && styles.textDark]}>KW {item.week}</Text>
+              <View style={[styles.weekTrendTrack, themed.soft]}>
+                <View
+                  style={[
+                    styles.weekTrendFill,
+                    {
+                      width: percentWidth((item.spreadUnits / Math.max(item.totalUnits, 1)) * 100),
+                      backgroundColor: item.balanced ? "#256F63" : "#c2410c",
+                    },
+                  ]}
+                />
+              </View>
+              <Text style={[styles.readinessBadge, themed.muted, darkMode && styles.mutedDark]}>{formatUnits(item.spreadUnits)}</Text>
+            </View>
+          ))}
+        </View>
+      )}
       <Text style={[styles.sectionTitle, styles.spacedTitle, themed.text, darkMode && styles.textDark]}>Aufgaben verteilen</Text>
       {!canManagePlan && <Text style={[styles.permissionHint, themed.muted, darkMode && styles.mutedDark]}>Nur Gruender und Verwalter koennen Aufgaben neu zuordnen.</Text>}
       {sortedAssignments.map((assignment) => {
@@ -213,6 +283,32 @@ export function FairnessScreen({
           </View>
         );
       })}
+    </View>
+  );
+}
+
+function FairnessMetricBar({
+  label,
+  value,
+  maxValue,
+  color,
+  darkMode,
+}: {
+  label: string;
+  value: number;
+  maxValue: number;
+  color: string;
+  darkMode: boolean;
+}) {
+  const themed = useThemeStyles(darkMode);
+  const width = percentWidth((value / Math.max(maxValue, 1)) * 100);
+  return (
+    <View style={styles.fairnessBarRow}>
+      <Text style={[styles.fairnessBarLabel, themed.muted, darkMode && styles.mutedDark]}>{label}</Text>
+      <View style={[styles.fairnessBarTrack, themed.soft]}>
+        <View style={[styles.fairnessBarFill, { width, backgroundColor: color }]} />
+      </View>
+      <Text style={[styles.fairnessBarValue, themed.text, darkMode && styles.textDark]}>{formatUnits(value)}</Text>
     </View>
   );
 }

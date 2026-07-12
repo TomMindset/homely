@@ -80,6 +80,12 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 - Normales Mitglied kann Aufgaben, Mitglieder und Essen nicht verwalten.
 - Verwalter kann Aufgaben, Mitglieder und Essen verwalten.
 
+## Fairness
+
+- Fairness zeigt je Person Soll, Plan und Ist als Zahlen und Balken.
+- Wochenverlauf zeigt die Spanne der letzten sichtbaren Wochen.
+- Wenn eine Aufgabe erledigt wird, erscheint auf `Heute` ein kurzer `Danke-Moment`.
+
 ## Push-Benachrichtigungen
 
 - Migration `0009_push_notifications.sql` ist in Supabase ausgefuehrt.

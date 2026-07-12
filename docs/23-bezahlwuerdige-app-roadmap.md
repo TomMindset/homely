@@ -52,6 +52,9 @@ Aktueller Umsetzungsabgleich: siehe `docs/25-7-konzepte-status.md`.
 - Beispiele: `Diese Woche ist ausgeglichen`, `Tom traegt gerade mehr`, `Entlastung moeglich`.
 - Zahlen bleiben sichtbar: Soll, Plan und Ist je Person.
 - Homely zeigt eine Fairness-Diagnose, Last-Klassifizierung pro Person und einen optionalen Entlastungsvorschlag fuer Verwalter.
+- Balken machen Soll, Plan und Ist schneller erfassbar.
+- Ein Wochenverlauf zeigt, ob die Spanne zwischen den Personen groesser oder kleiner wird.
+- Nach erledigten Aufgaben erscheint ein ruhiger Danke-Moment im Heute-Flow.
 - Tonalitaet: nicht beschuldigend, sondern entlastend.
 
 ## 6. Kalender- und Jahresmodus
@@ -94,7 +97,6 @@ Umsetzungsregel:
 
 1. Migration `0012_notification_dispatch_expansion.sql` ausfuehren und `send-task-reminders` neu deployen.
 2. Aktuellen Stand auf Samsung testen: Heute, Aufgaben, Fairness, Essen, Mehr, Push-Test, Ueberfaellig-Push, Haushaltsstatus und Sync.
-3. Fairness visualisieren: Balken, Wochenverlauf, Danke-Moment.
-4. Kalenderlogik erweitern: alle X Wochen, monatlich, jaehrlich.
-5. Wiederverwendbare UI-Zustaende und Offline-/Konfliktlogik vereinheitlichen.
-6. Polish-Schicht pro Release.
+3. Kalenderlogik erweitern: alle X Wochen, monatlich, jaehrlich.
+4. Wiederverwendbare UI-Zustaende und Offline-/Konfliktlogik vereinheitlichen.
+5. Polish-Schicht pro Release.

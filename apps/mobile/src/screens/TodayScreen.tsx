@@ -104,6 +104,7 @@ export function TodayScreen({
   members,
   darkMode,
   activeMemberId,
+  completionPraise,
   canManagePlan,
   setView,
   toggleAssignment,
@@ -114,6 +115,7 @@ export function TodayScreen({
   members: Member[];
   darkMode: boolean;
   activeMemberId: string;
+  completionPraise?: string;
   canManagePlan: boolean;
   setView: (view: ViewId) => void;
   toggleAssignment: (id: string, completedByMemberId?: string) => void;
@@ -173,6 +175,12 @@ export function TodayScreen({
         setMode={setMode}
         setView={setView}
       />
+      {!!completionPraise && (
+        <View style={[styles.thanksMoment, themed.soft]}>
+          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Danke-Moment</Text>
+          <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>{completionPraise}</Text>
+        </View>
+      )}
       {!displayedAssignments.length && (
         <View style={[styles.emptyStateCard, themed.soft]}>
           <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>
