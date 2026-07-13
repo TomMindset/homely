@@ -1,6 +1,6 @@
 # Homely Roadmap: Bezahlwuerdige App
 
-Stand: 2026-07-12
+Stand: 2026-07-14
 
 Ziel: Homely soll nicht nur Aufgaben verwalten, sondern Alltagsstress reduzieren. Die App wird dann bezahlwuerdig, wenn neue Nutzer schnell starten, regelmaessige Nutzer sofort ihre Aufgaben sehen und Verwalter faire Entscheidungen treffen koennen.
 
@@ -23,6 +23,7 @@ Aktueller Umsetzungsabgleich: siehe `docs/25-7-konzepte-status.md`.
 - Startprofile fuer Familie, WG, Paar und Haus setzen passende Paketvorschlaege.
 - Eine Startplan-Vorschau zeigt Aufgabenanzahl, Punkte und aktive Pakete vor dem Start.
 - Nutzer waehlen Aufgabenpakete statt einzelne Aufgabenlisten zu pflegen.
+- Der Abschluss `Dein Wochenplan ist bereit` gibt Orientierung und bietet Heute, Konto oder Einladung als naechsten Schritt.
 - Homely startet danach auf `Heute` mit einem sichtbaren Plan.
 - Einladung bleibt eigener Flow: erst Konto, dann Einladungscode.
 
@@ -34,6 +35,7 @@ Aktueller Umsetzungsabgleich: siehe `docs/25-7-konzepte-status.md`.
 - `Heute` gruppiert Aufgaben in `Jetzt wichtig`, `Spaeter heute` und `Erledigt`.
 - Verwalter erhalten klare Einstellbereiche fuer Haushalt, Aufgaben, Sync, Push und Check.
 - Technische Fehler bleiben im Diagnose-/Checkbereich; Alltagstexte bleiben ruhig und konkret.
+- Cloud und Diagnose sind getrennt: Alltag zeigt Handlungen, Diagnose zeigt technische Details.
 
 ## 4. Intelligente Aufgabenverteilung
 
@@ -45,6 +47,8 @@ Aktueller Umsetzungsabgleich: siehe `docs/25-7-konzepte-status.md`.
 - Der Vorschlag berechnet die niedrigste aktuelle Planlast ohne die bearbeitete Aufgabe doppelt zu zaehlen.
 - Aufgabenbearbeitung kennt `Uebliche Zustaendigkeit` ab gewaehlter KW, z. B. fuer Waesche oder Getraenke.
 - Uebliche Zustaendigkeit veraendert offene Zukunftstermine; erledigte Historie bleibt erhalten.
+- Aufgabenbearbeitung kennt `Faehigkeit & Vorlieben` je Person.
+- Fairness bietet einen globalen `Plan fairer machen`-Flow fuer mehrere offene Aufgaben gleichzeitig.
 
 ## 5. Fairness als Kernversprechen
 
@@ -61,9 +65,11 @@ Aktueller Umsetzungsabgleich: siehe `docs/25-7-konzepte-status.md`.
 
 - Homely braucht Planung ueber die aktuelle Woche hinaus.
 - Aufgaben-Langzeituebersicht zeigt die kommenden 12 Wochen aus dem vollstaendigen Plan.
+- Monatskalender und Jahresblick sind als Verwalteransicht vorhanden.
 - Wiederholungen: taeglich, Wochentage, alle X Wochen, monatlich, jaehrlich sind fuer eigene Aufgaben umgesetzt.
 - Muelltermine koennen als Aufgabenserie mit Tonnenart, Rhythmus, Wochentag/Monatstag und Erinnerung angelegt werden.
-- Besonderheiten danach: Urlaub, Ferien und saisonale Aufgaben.
+- Urlaub/Ferien koennen als reine Anzeige vorgemerkt werden; automatische Pausierung/Verschiebung kommt spaeter.
+- Besonderheiten danach: saisonale Aufgaben und echte Ausnahmebehandlung.
 - UX-Regel: Tagesansicht bleibt leicht, Kalender ist ein Verwalter-Werkzeug.
 
 ## 7. Polierte Details
@@ -71,6 +77,7 @@ Aktueller Umsetzungsabgleich: siehe `docs/25-7-konzepte-status.md`.
 - Undo nach Aufgaben-Loeschen ist vorhanden und stellt Zuordnungen wieder her.
 - Lade-, Fehler-, Undo- und Leerzustaende fuer Hauptflows nutzen gemeinsame Statusbausteine: Heute, Woche, Aufgaben, Sync und Konto.
 - Offline-/Sync-Konflikte werden im Kopfbereich und Konto-/Syncbereich ruhig erklaert; lokale Aenderungen bleiben nachvollziehbar.
+- Beim Planladen gibt es eine echte Konfliktentscheidung: Cloud uebernehmen, lokalen Stand sichern oder spaeter entscheiden.
 - Keine Textueberlaeufe auf Samsung-Groessen.
 - App-Version, Diagnose und Release-Check bleiben sichtbar fuer Tests.
 
@@ -98,6 +105,6 @@ Umsetzungsregel:
 
 1. Migration `0012_notification_dispatch_expansion.sql` ausfuehren und `send-task-reminders` neu deployen.
 2. Aktuellen Stand auf Samsung testen: Heute, Aufgaben, Fairness, Essen, Mehr, Push-Test, Ueberfaellig-Push, Haushaltsstatus und Sync.
-3. Wiederverwendbare UI-Zustaende und Offline-/Konfliktlogik vereinheitlichen.
-4. Urlaub/Ferien als Anzeige und spaeter als Aufgaben-Ausnahme konzipieren.
+3. Aktuellen Stand auf Samsung testen: Konfliktentscheidung, Langzeitansicht, Praeferenzen und globaler Fairness-Flow.
+4. Urlaub/Ferien als echte Aufgaben-Ausnahme mit Pausierung, Verschiebung oder Vertretung konzipieren.
 5. Polish-Schicht pro Release.

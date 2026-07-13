@@ -40,7 +40,7 @@ import { StateMessage } from "../components/StateMessage";
 import { FamilyScreen } from "./FamilyScreen";
 
 type SettingsTab = "account" | "household" | "appearance" | "readiness";
-type AccountArea = "identity" | "households" | "sync" | "invites" | "notifications" | "danger";
+type AccountArea = "identity" | "households" | "sync" | "invites" | "notifications" | "diagnostics" | "danger";
 type SyncStatus = {
   state: "local" | "syncing" | "synced" | "error";
   message: string;
@@ -51,6 +51,36 @@ function getMessageTone(message: string): "success" | "warning" | "error" {
   if (lower.includes("konnte nicht") || lower.includes("fehler") || lower.includes("blockiert") || lower.includes("fehl")) return "error";
   if (lower.includes("bitte") || lower.includes("noch") || lower.includes("lokal")) return "warning";
   return "success";
+}
+
+function plannerSnapshotSignature(snapshot: PlannerSnapshot) {
+  return JSON.stringify({
+    householdName: snapshot.householdName.trim(),
+    members: snapshot.members
+      .map((member) => [member.id, member.name, member.shortCode, member.role, member.color])
+      .sort((first, second) => String(first[0]).localeCompare(String(second[0]), "de")),
+    tasks: snapshot.tasks
+      .map((task) => [task.id, task.title, task.effortUnits, task.recurrenceType ?? "", (task.scheduledDays ?? []).join("|")])
+      .sort((first, second) => String(first[0]).localeCompare(String(second[0]), "de")),
+    assignments: snapshot.assignments
+      .map((assignment) => [
+        assignment.id,
+        assignment.taskId,
+        assignment.memberId,
+        assignment.completedByMemberId ?? "",
+        assignment.status,
+        assignment.week,
+        assignment.dayIndex,
+      ])
+      .sort((first, second) => String(first[0]).localeCompare(String(second[0]), "de")),
+    meals: snapshot.meals
+      .map((meal) => [meal.id, meal.title, meal.cookMemberId ?? "", meal.week, meal.day])
+      .sort((first, second) => String(first[0]).localeCompare(String(second[0]), "de")),
+  });
+}
+
+function snapshotSummary(snapshot: PlannerSnapshot) {
+  return `${snapshot.members.length} Personen · ${snapshot.tasks.length} Aufgaben · ${snapshot.assignments.length} Termine · ${snapshot.meals.length} Essen`;
 }
 
 const readinessItems = [
@@ -330,6 +360,7 @@ function AccountSettings({
   const [message, setMessage] = useState("");
   const [databaseMessage, setDatabaseMessage] = useState("");
   const [syncMessage, setSyncMessage] = useState("");
+  const [pendingCloudSnapshot, setPendingCloudSnapshot] = useState<PlannerSnapshot | null>(null);
   const [busy, setBusy] = useState(false);
   const [remoteHouseholds, setRemoteHouseholds] = useState<RemoteHousehold[]>([]);
   const [remoteMemberships, setRemoteMemberships] = useState<RemoteMembership[]>([]);
@@ -347,6 +378,13 @@ function AccountSettings({
   const primaryMember = members.find((member) => member.role === "owner") ?? members[0];
   const isSignedIn = !!currentAuthEmail;
   const displayedEmail = currentAuthEmail || email || accountEmail;
+  const localSnapshot: PlannerSnapshot = {
+    householdName: familyName,
+    members,
+    tasks,
+    assignments,
+    meals,
+  };
 
   useEffect(() => {
     setEmail(accountEmail);
@@ -529,20 +567,37 @@ function AccountSettings({
     runSyncAction(() =>
       uploadPlannerSnapshot({
         householdId: activeRemoteHouseholdId,
-        householdName: familyName,
-        members,
-        tasks,
-        assignments,
-        meals,
+        ...localSnapshot,
       }),
     );
+  }
+
+  function uploadLocalOverCloud() {
+    setPendingCloudSnapshot(null);
+    runSyncAction(() =>
+      uploadPlannerSnapshot({
+        householdId: activeRemoteHouseholdId,
+        ...localSnapshot,
+      }),
+    );
+  }
+
+  function applyCloudSnapshot(snapshot: PlannerSnapshot) {
+    applyRemoteSnapshot(snapshot);
+    setPendingCloudSnapshot(null);
+    setSyncMessage("Cloud-Stand uebernommen.");
+    setView("today");
   }
 
   function loadPlanner() {
     runSyncAction(() => downloadPlannerSnapshot(activeRemoteHouseholdId), (snapshot) => {
       if (snapshot) {
-        applyRemoteSnapshot(snapshot);
-        setView("today");
+        if (plannerSnapshotSignature(snapshot) === plannerSnapshotSignature(localSnapshot)) {
+          applyCloudSnapshot(snapshot);
+          return;
+        }
+        setPendingCloudSnapshot(snapshot);
+        setSyncMessage("Cloud und lokaler Plan unterscheiden sich. Bitte entscheide, welcher Stand gelten soll.");
       }
     });
   }
@@ -702,6 +757,7 @@ function AccountSettings({
     { id: "sync", label: "Cloud" },
     { id: "invites", label: "Einladen" },
     { id: "notifications", label: "Push" },
+    { id: "diagnostics", label: "Diagnose" },
     { id: "danger", label: "Daten" },
   ];
   const pushControlsDisabled = !isSignedIn || busy || !pushStatus;
@@ -1061,27 +1117,24 @@ function AccountSettings({
 
       {accountArea === "sync" && (
         <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
-        <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Haushalts-Sync</Text>
+        <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Homely-Cloud</Text>
         <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
-          Lege den aktuellen lokalen Haushalt in Supabase an, lade bestehende Haushalte oder uebertrage lokale Aenderungen in die Homely-Cloud.
+          Sichere deinen Haushalt online, lade bestehende Haushalte und teile den Plan mit eingeladenen Personen.
         </Text>
-        <View style={[styles.compactInfoBox, darkMode && styles.rowDark, themed.soft]}>
-          <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
-            {getSupabaseStatusLabel()}. Cloud-Aktionen brauchen ein angemeldetes Konto.
-          </Text>
-          <TouchableOpacity style={[styles.secondaryActionFull, themed.soft, busy && styles.disabledButton]} disabled={busy} onPress={runDatabaseCheck}>
-            <Text style={[styles.secondaryActionText, themed.muted]}>Datenbank pruefen</Text>
-          </TouchableOpacity>
-          {!!databaseMessage && (
-            <StateMessage darkMode={darkMode} tone={getMessageTone(databaseMessage)} title="Datenbankstatus" message={databaseMessage} />
-          )}
-        </View>
+        {!isSignedIn && (
+          <StateMessage
+            darkMode={darkMode}
+            tone="warning"
+            title="Erst anmelden"
+            message="Cloud-Sicherung und Einladungen brauchen ein Konto. Deine lokalen Daten bleiben bis dahin auf diesem Geraet."
+          />
+        )}
         <View style={styles.editorActions}>
           <TouchableOpacity style={[styles.secondaryAction, themed.soft, busy && styles.disabledButton]} disabled={busy} onPress={loadHouseholds}>
-            <Text style={[styles.secondaryActionText, themed.muted]}>Haushalte laden</Text>
+            <Text style={[styles.secondaryActionText, themed.muted]}>Cloud laden</Text>
           </TouchableOpacity>
           <TouchableOpacity style={[styles.primaryActionInline, themed.primary, busy && styles.disabledButton]} disabled={busy} onPress={createHousehold}>
-            <Text style={styles.primaryActionText}>Sync anlegen</Text>
+            <Text style={styles.primaryActionText}>Cloud anlegen</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.editorActions}>
@@ -1090,7 +1143,7 @@ function AccountSettings({
             disabled={!activeRemoteHouseholdId || !canManagePlan || busy}
             onPress={uploadPlanner}
           >
-            <Text style={[styles.secondaryActionText, themed.muted]}>Plan hochladen</Text>
+            <Text style={[styles.secondaryActionText, themed.muted]}>Plan sichern</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.secondaryAction, themed.soft, (!activeRemoteHouseholdId || busy) && styles.disabledButton]}
@@ -1101,14 +1154,57 @@ function AccountSettings({
           </TouchableOpacity>
         </View>
         <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
-          Hochladen speichert lokale Mitglieder, Aufgaben, Punkte und Wochenzuordnungen in Supabase. Laden ersetzt die lokale Ansicht durch den
-          Supabase-Stand.
+          Sichern uebertraegt lokale Aenderungen in die Cloud. Laden uebernimmt den aktuellen Cloud-Stand auf dieses Geraet.
         </Text>
+        {!!pendingCloudSnapshot && (
+          <StateMessage
+            darkMode={darkMode}
+            tone="warning"
+            title="Unterschiedliche Staende gefunden"
+            message={`Lokal: ${snapshotSummary(localSnapshot)}. Cloud: ${snapshotSummary(pendingCloudSnapshot)}.`}
+          >
+            <View style={styles.editorActions}>
+              <TouchableOpacity
+                style={[styles.primaryActionInline, themed.primary, busy && styles.disabledButton]}
+                disabled={busy}
+                accessibilityRole="button"
+                accessibilityLabel="Cloud-Stand uebernehmen"
+                accessibilityState={{ disabled: busy }}
+                onPress={() => applyCloudSnapshot(pendingCloudSnapshot)}
+              >
+                <Text style={styles.primaryActionText}>Cloud uebernehmen</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.secondaryAction, themed.soft, (!canManagePlan || busy) && styles.disabledButton]}
+                disabled={!canManagePlan || busy}
+                accessibilityRole="button"
+                accessibilityLabel="Lokalen Stand in die Cloud sichern"
+                accessibilityState={{ disabled: !canManagePlan || busy }}
+                onPress={uploadLocalOverCloud}
+              >
+                <Text style={[styles.secondaryActionText, themed.muted]}>Lokal sichern</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.secondaryAction, themed.soft]}
+                accessibilityRole="button"
+                accessibilityLabel="Sync-Konflikt spaeter entscheiden"
+                onPress={() => {
+                  setPendingCloudSnapshot(null);
+                  setSyncMessage("Konflikt spaeter entscheiden. Es wurde nichts ueberschrieben.");
+                }}
+              >
+                <Text style={[styles.secondaryActionText, themed.muted]}>Spaeter</Text>
+              </TouchableOpacity>
+            </View>
+          </StateMessage>
+        )}
         {!!syncMessage && (
           <StateMessage darkMode={darkMode} tone={getMessageTone(syncMessage)} title="Sync-Status" message={syncMessage} />
         )}
         {!!activeRemoteHouseholdId && (
-          <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Aktiver Sync-Haushalt: {activeRemoteHouseholdId}</Text>
+          <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+            Aktiver Haushalt: {activeRemoteHousehold?.name ?? "Cloud-Haushalt"}
+          </Text>
         )}
         {remoteHouseholds.map((household) => {
           const active = activeRemoteHouseholdId === household.id;
@@ -1123,7 +1219,7 @@ function AccountSettings({
             >
               <View style={styles.taskTextBox}>
                 <Text style={[styles.taskTitle, darkMode && styles.textDark]}>{household.name}</Text>
-                <Text style={[styles.taskMeta, darkMode && styles.mutedDark]}>{household.id}</Text>
+                <Text style={[styles.taskMeta, darkMode && styles.mutedDark]}>{active ? "Gerade aktiv" : "Antippen zum Auswaehlen"}</Text>
               </View>
               <Text style={[styles.scoreUnits, darkMode && styles.textDark]}>{active ? "Aktiv" : ""}</Text>
             </TouchableOpacity>
@@ -1143,6 +1239,55 @@ function AccountSettings({
           </View>
         )}
       </View>
+      )}
+
+      {accountArea === "diagnostics" && (
+        <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
+          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Diagnose & Verbindung</Text>
+          <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
+            Fuer Tests und Fehlersuche: technische Verbindung, Datenbankfreigaben und aktiven Cloud-Haushalt pruefen.
+          </Text>
+          <View style={[styles.compactInfoBox, darkMode && styles.rowDark, themed.soft]}>
+            <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>{getSupabaseStatusLabel()}</Text>
+            <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+              Konto: {isSignedIn ? displayedEmail : "nicht angemeldet"}
+            </Text>
+            <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+              Cloud-Haushalt: {activeRemoteHouseholdId || "nicht verbunden"}
+            </Text>
+            <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+              Geladene Mitgliedschaften: {remoteMemberships.length}
+            </Text>
+          </View>
+          <View style={styles.editorActions}>
+            <TouchableOpacity
+              style={[styles.primaryActionInline, themed.primary, busy && styles.disabledButton]}
+              disabled={busy}
+              accessibilityRole="button"
+              accessibilityLabel="Datenbank pruefen"
+              accessibilityState={{ disabled: busy }}
+              onPress={runDatabaseCheck}
+            >
+              <Text style={styles.primaryActionText}>Datenbank pruefen</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.secondaryAction, themed.soft, busy && styles.disabledButton]}
+              disabled={busy}
+              accessibilityRole="button"
+              accessibilityLabel="Cloud-Haushalte fuer Diagnose laden"
+              accessibilityState={{ disabled: busy }}
+              onPress={loadHouseholds}
+            >
+              <Text style={[styles.secondaryActionText, themed.muted]}>Haushalte laden</Text>
+            </TouchableOpacity>
+          </View>
+          {!!databaseMessage && (
+            <StateMessage darkMode={darkMode} tone={getMessageTone(databaseMessage)} title="Datenbankstatus" message={databaseMessage} />
+          )}
+          {!!syncMessage && (
+            <StateMessage darkMode={darkMode} tone={getMessageTone(syncMessage)} title="Sync-Diagnose" message={syncMessage} />
+          )}
+        </View>
       )}
 
       {accountArea === "danger" && (

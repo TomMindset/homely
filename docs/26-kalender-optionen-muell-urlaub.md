@@ -1,6 +1,6 @@
 # Homely Kalenderoptionen: Muell, Urlaub und Ferien
 
-Stand: 2026-07-12
+Stand: 2026-07-14
 
 Diese Erweiterung ist optional fuer Version 1, aber wichtig fuer eine sehr starke Jahresplanung. Die Tagesansicht soll leicht bleiben; Kalenderlogik gehoert in einen Verwalterbereich.
 
@@ -64,3 +64,10 @@ UX:
 3. Urlaub/Ferien als reine Anzeige im Langzeitkalender.
 4. Urlaub/Ferien mit automatischer Aufgabenverschiebung.
 5. Import aus externen Kalendern oder kommunalen Muellkalendern.
+
+## Aktueller App-Stand
+
+- Muelltermine sind als wiederkehrende Aufgabenserie unter `Aufgaben > Bearbeiten` anlegbar.
+- `Aufgaben > Langfristig` zeigt 12 Wochen, Monatskalender und Jahresblick.
+- Urlaub/Ferien koennen fuer Haushalt oder einzelne Personen als Marker vorgemerkt und geloescht werden.
+- Diese Marker sind noch reine Anzeige. Automatische Pausierung, Verschiebung oder Vertretung bleibt der naechste Ausbauschritt.

@@ -508,6 +508,8 @@ check("professional MVP UI gates are wired", () => {
   assert(fairness.includes("FairnessInsight") && fairness.includes("Entlastungsvorschlag"), "Fairness should explain balance and suggest relief");
   assert(fairness.includes("Im Ziel") && fairness.includes("Traegt mehr") && fairness.includes("Hat Luft"), "Fairness should classify member load");
   assert(fairness.includes("FairnessMetricBar") && fairness.includes("Wochenverlauf"), "Fairness should visualize bars and weekly trend");
+  assert(app.includes("taskPreferences={planner.taskPreferences}"), "Task preferences should be wired into task and fairness screens");
+  assert(fairness.includes("GlobalFairPlanCard") && fairness.includes("Plan fairer machen"), "Fairness should offer a global fair-plan action");
   assert(today.includes("Danke-Moment") && plannerState.includes("lastCompletionPraise"), "Completed tasks should create a small thanks moment");
   assert(settings.includes("Fairness & Motivation"), "Settings should describe fairness readiness");
   assert(meals.includes("Tauschen aktiv") && meals.includes("longterm"), "Meals should support long-term swap workflow");
@@ -516,7 +518,10 @@ check("professional MVP UI gates are wired", () => {
   assert(plannerState.includes("activateTaskPackage") && tasks.includes("Musteraufgabenpakete"), "Tasks should allow task packages after onboarding");
   assert(tasks.includes("LongtermTasksOverview") && tasks.includes("Langfristig"), "Tasks screen should include a long-term overview");
   assert(app.includes("assignments={planner.assignments}") && tasks.includes("LongtermTasksOverview"), "Tasks long-term view should receive the full assignment plan");
+  assert(tasks.includes("calendarMode") && tasks.includes("Monatskalender fuer Verwalter") && tasks.includes("Jahresblick"), "Tasks long-term view should include month and year manager views");
+  assert(tasks.includes("Urlaub & Ferien vormerken") && plannerState.includes("availabilityWindows"), "Tasks should prepare visible vacation/holiday markers");
   assert(tasks.includes("Zuordnung in KW"), "Task editing should expose assignment controls");
+  assert(tasks.includes("Faehigkeit & Vorlieben") && plannerState.includes("updateTaskPreference"), "Task editing should capture member capability and preference signals");
   assert(plannerState.includes("applyTaskDefaultMember") && tasks.includes("Uebliche Zustaendigkeit"), "Task editing should support usual/default assignees");
   assert(tasks.includes("buildFairAssignmentPlan") && tasks.includes("Fair verteilen"), "Task editing should offer fair assignment suggestions");
   assert(plannerState.includes("addWasteTask") && tasks.includes("WasteSeriesBuilder") && tasks.includes("Muelltermine"), "Tasks should offer waste pickup series as recurring task templates");
@@ -528,8 +533,11 @@ check("professional MVP UI gates are wired", () => {
   assert(family.includes("memberSummary") && family.includes("memberActions"), "Household member rows should separate info and actions");
   assert(settings.includes("releaseGateItems") && settings.includes("Play Console"), "Readiness screen should include Play release gates");
   assert(settings.includes("accountArea") && settings.includes("Identitaet") && settings.includes("Cloud"), "Account settings should be grouped into subareas");
+  assert(settings.includes("Diagnose & Verbindung") && settings.includes("plannerSnapshotSignature"), "Account settings should separate diagnostics and detect sync conflicts");
+  assert(settings.includes("Unterschiedliche Staende gefunden") && settings.includes("Cloud uebernehmen") && settings.includes("Lokal sichern"), "Sync conflicts should offer explicit resolution choices");
   assert(onboarding.includes("Musteraufgabenpakete") && onboarding.includes("selectedTaskPackageIds"), "Onboarding should expose task package selection");
   assert(onboarding.includes("householdProfiles") && onboarding.includes("Startplan-Vorschau"), "Onboarding should guide users with household profiles and preview");
+  assert(onboarding.includes("Dein Wochenplan ist bereit") && onboarding.includes("Konto einrichten"), "Onboarding should end with a ready moment and account next step");
   assert(taskPackages.includes("getTaskPackageSelectionStats"), "Task packages should expose selection stats for onboarding preview");
   assert(taskPackages.includes("Basis-Haushalt") && taskPackages.includes("WG & geteilter Haushalt"), "Task packages should include household-specific starter sets");
   assert(plannerState.includes("getTaskIdsForPackages") && plannerState.includes("deletedSeedTaskIds"), "Onboarding should activate only selected task package templates");

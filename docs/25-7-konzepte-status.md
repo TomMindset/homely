@@ -1,6 +1,6 @@
 # Homely Abgleich: 7 Konzepte
 
-Stand: 2026-07-12
+Stand: 2026-07-14
 
 Dieser Abgleich ersetzt die fruehere Zwischenliste und bewertet den aktuellen Stand nach den letzten Umsetzungen. Ziel ist eine klare Sicht darauf, was fuer den bezahlwuerdigen MVP bereits in der App steckt und was vor oder nach dem naechsten Testpaket noch offen ist.
 
@@ -31,11 +31,10 @@ Erfuellt:
 - Haushaltstypen fuer Familie, WG, Paar und Haus setzen passende Paketvorschlaege.
 - Die Startplan-Vorschau zeigt Aufgabenanzahl, Punkte und aktive Pakete vor dem Start.
 - Nutzer starten nicht mehr mit allen Excel-Aufgaben, sondern mit bewusst gewaehlten Paketen.
+- Der Abschlussmoment `Dein Wochenplan ist bereit` bestaetigt den Start und fuehrt sanft zu Heute, Konto oder Einladung.
 
 Offen:
 
-- Der OnboardingWizard braucht noch einen staerkeren Abschlussmoment wie `Dein Wochenplan ist bereit`.
-- Konto, Sync und Einladung sollten nach dem lokalen Start noch sanfter als naechster Schritt angeboten werden.
 - Defaults je Haushaltstyp sollten nach echten Tests weiter geschaerft werden.
 
 ## 3. Weniger Verwaltungsgefuehl: gut unterwegs
@@ -47,11 +46,11 @@ Erfuellt:
 - `Heute` zeigt offene Aufgaben, erledigte Aufgaben, offene Punkte und einen Fokus auf den aktuellen Tag.
 - `Heute` gruppiert sichtbare Aufgaben in `Jetzt wichtig`, `Spaeter heute` und `Erledigt`.
 - Sync-Fehler und technische Hinweise werden ruhiger dargestellt; lokale Aenderungen bleiben nachvollziehbar.
+- Konto und Cloud sind entschlackt; technische Supabase-Details liegen im Diagnosebereich.
 - Wochenansicht und Sync haben bessere Leer- und Fehlerzustaende.
 
 Offen:
 
-- Technische Supabase-Texte sollten konsequent aus Konto/Alltag in Diagnose und Check verschoben werden.
 - Wiederkehrende Nutzer sollten noch weniger Einstellungen sehen, wenn sie nichts verwalten muessen.
 
 ## 4. Intelligente Aufgabenverteilung: deutlich weiter
@@ -63,13 +62,13 @@ Erfuellt:
 - Der Vorschlag verteilt anhand aktueller Wochenlast und zaehlt die bearbeitete Aufgabe nicht doppelt.
 - `Uebliche Zustaendigkeit` ist vorhanden, z. B. fuer Waesche, Keller, Getraenke oder andere Standardaufgaben.
 - Uebliche Zustaendigkeit veraendert offene Zukunftstermine ab gewaehlter KW; erledigte Historie bleibt erhalten.
+- Aufgabenbearbeitung kennt `Faehigkeit & Vorlieben` je Person: mag, kann, neutral oder lieber nicht.
+- Ein globaler `Plan fairer machen`-Flow schlaegt mehrere offene Umverteilungen vor und braucht Bestaetigung.
 
 Offen:
 
-- Rollenfaehigkeit fehlt noch, z. B. wer bestimmte Aufgaben grundsaetzlich machen kann oder darf.
-- Praeferenzen fehlen noch, z. B. mag Kochen, hasst Bad, kann nur Wochenende.
+- Rollenfaehigkeit ist als Praeferenzsignal vorbereitet, braucht spaeter aber echte Regeln wie Wochenende, Alter oder Berechtigung.
 - Historie ueber mehrere Wochen sollte die Vorschlaege verbessern.
-- Ein globaler `Plan fairer machen`-Flow fuer mehrere Aufgaben gleichzeitig ist noch offen.
 
 ## 5. Fairness als emotionales Kernversprechen: gut unterwegs
 
@@ -96,11 +95,13 @@ Erfuellt:
 - Intervall, Tag und Monat werden lokal gespeichert und ueber Supabase-Sync vorbereitet.
 - Muelltermine koennen als normale wiederkehrende Aufgabenserie angelegt werden.
 - Tagesansicht bleibt leicht, Langzeitplanung ist als Verwalterwerkzeug angelegt.
+- Monatskalender und Jahresblick sind als Verwalteransichten in der Aufgaben-Langzeituebersicht vorhanden.
+- Urlaub/Ferien koennen als reine Anzeige fuer Haushalt oder einzelne Personen vorgemerkt werden.
 
 Offen:
 
-- Monats- und Jahreskalender fehlen noch.
-- Urlaub, Ferien und saisonale Aufgaben fehlen noch.
+- Urlaub/Ferien pausieren oder verschieben Aufgaben noch nicht automatisch.
+- Saisonale Aufgaben brauchen spaeter eigene Regeln oder Kalenderquellen.
 - Langfristige Planung braucht spaeter Filter nach Person, Aufgabe und Haushalt.
 - Optionale Erweiterung ist konzipiert: Muelltermine als Terminserien, Urlaub/Ferien als Sperrzeiten mit Planverschiebung oder Pausierung.
 
@@ -113,12 +114,13 @@ Erfuellt:
 - Undo nach Aufgabenloeschung ist vorhanden und stellt Aufgaben samt Zuordnungen wieder her.
 - `StateMessage`, `EmptyState` und `UndoToast` vereinheitlichen Leer-, Fehler-, Sync- und Rueckgaengig-Hinweise in den Hauptflows.
 - Sync-Lade- und Fehlerhinweise erklaeren ruhig, dass lokale Aenderungen erhalten bleiben.
+- Sync-Konflikte beim Planladen bieten jetzt echte Auswahl: Cloud uebernehmen, lokalen Stand sichern oder spaeter entscheiden.
 - Push-Testbenachrichtigung ist vorhanden.
 
 Offen:
 
 - Ein eigener `LoadingState` fuer laengere Ladeflaechen fehlt noch; kleinere Lade- und Sync-Zustaende nutzen bereits `StateMessage`.
-- Offline- und Konflikthinweise brauchen spaeter eine echte Loesungslogik mit Auswahl, nicht nur Erklaerung.
+- Offline-Konflikte bei parallelen Aenderungen brauchen spaeter noch feinere Zusammenfuehrung; die grobe Sync-Richtung ist geloest.
 - Samsung-Visual-QA sollte pro Release feste Screenshots fuer Heute, Aufgaben, Essen, Fairness und Mehr enthalten.
 - Kleine Texte und Buttons sollten nach echten Geraetetests weiter gegen Umbrueche gehaertet werden.
 
@@ -126,5 +128,5 @@ Offen:
 
 1. Migration `0012_notification_dispatch_expansion.sql` ausfuehren und `send-task-reminders` neu deployen.
 2. Geraetetest mit aktuellem Stand: Heute, Aufgaben, Fairness, Essen, Mehr, Push-Test, Ueberfaellig-Push, Haushaltsstatus und Sync.
-3. Wiederverwendbare UI-Zustaende und Offline-/Konfliktlogik vereinheitlichen.
-4. Urlaub/Ferien als Anzeige und spaeter als Aufgaben-Ausnahme vorbereiten.
+3. Samsung-Geraetetest mit Konfliktentscheidung, Langzeitansicht, Praeferenzen und globalem Fairness-Flow.
+4. Urlaub/Ferien spaeter als Aufgaben-Ausnahme mit Pausierung, Verschiebung oder Vertretung vorbereiten.

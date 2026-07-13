@@ -139,6 +139,7 @@ export default function App() {
               assignments={planner.weekAssignments}
               allAssignments={planner.assignments}
               tasks={planner.tasks}
+              taskPreferences={planner.taskPreferences}
               members={planner.members}
               darkMode={planner.darkMode}
               canManagePlan={planner.canManagePlan}
@@ -159,6 +160,7 @@ export default function App() {
           {planner.view === "tasks" && (
             <TasksScreen
               tasks={planner.tasks}
+              taskPreferences={planner.taskPreferences}
               darkMode={planner.darkMode}
               newTitle={planner.newTitle}
               setNewTitle={planner.setNewTitle}
@@ -190,8 +192,12 @@ export default function App() {
               lastDeletedTaskTitle={planner.lastDeletedTaskTitle}
               undoDeleteTask={planner.undoDeleteTask}
               assignments={planner.assignments}
+              availabilityWindows={planner.availabilityWindows}
               members={planner.members}
               selectedWeek={planner.selectedWeek}
+              addAvailabilityWindow={planner.addAvailabilityWindow}
+              deleteAvailabilityWindow={planner.deleteAvailabilityWindow}
+              updateTaskPreference={planner.updateTaskPreference}
               updateAssignmentMember={planner.updateAssignmentMember}
             />
           )}

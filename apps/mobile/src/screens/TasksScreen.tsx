@@ -14,7 +14,19 @@ import { seedData } from "../data/seedData";
 import { getTaskPackageStats, taskPackages, type TaskPackageId } from "../data/taskPackages";
 import { styles } from "../styles/plannerStyles";
 import { useThemeStyles } from "../theme/useThemeStyles";
-import { Assignment, DayName, Member, TaskTemplate, getRuleByTaskId, getTaskById, ruleLabel } from "../utils/planner";
+import {
+  Assignment,
+  AvailabilityWindow,
+  DayName,
+  Member,
+  TaskPreference,
+  TaskPreferenceValue,
+  TaskTemplate,
+  getDateForWeekDay,
+  getRuleByTaskId,
+  getTaskById,
+  ruleLabel,
+} from "../utils/planner";
 import { StateMessage, UndoToast } from "../components/StateMessage";
 
 type TaskUpdateOptions = {
@@ -39,6 +51,15 @@ type WasteTaskInput = {
   reminderTime?: string;
 };
 
+type AvailabilityWindowInput = {
+  title: string;
+  type: AvailabilityWindow["type"];
+  startWeek: number;
+  endWeek: number;
+  memberId?: string | null;
+  note?: string;
+};
+
 type FairAssignmentSuggestion = {
   assignmentId: string;
   memberId: string;
@@ -47,6 +68,26 @@ type FairAssignmentSuggestion = {
   beforeUnits: number;
   projectedUnits: number;
 };
+
+const monthLabels = ["Jan", "Feb", "Maerz", "Apr", "Mai", "Juni", "Juli", "Aug", "Sept", "Okt", "Nov", "Dez"];
+
+const taskPreferenceOptions: Array<{ id: TaskPreferenceValue | "neutral"; label: string }> = [
+  { id: "preferred", label: "Mag" },
+  { id: "capable", label: "Kann" },
+  { id: "neutral", label: "Neutral" },
+  { id: "avoid", label: "Lieber nicht" },
+];
+
+function getTaskPreferenceValue(taskPreferences: TaskPreference[], taskId: string, memberId: string) {
+  return taskPreferences.find((item) => item.taskId === taskId && item.memberId === memberId)?.value ?? "neutral";
+}
+
+function taskPreferenceWeight(value: TaskPreferenceValue | "neutral") {
+  if (value === "preferred") return -2;
+  if (value === "capable") return -1;
+  if (value === "avoid") return 4;
+  return 0;
+}
 
 const wastePresets = [
   { id: "rest", label: "Restmuell", title: "Restmuell rausstellen", effortUnits: 1 },
@@ -74,6 +115,7 @@ function buildFairAssignmentPlan(
   tasks: TaskTemplate[],
   members: Member[],
   task: TaskTemplate,
+  taskPreferences: TaskPreference[],
 ): FairAssignmentSuggestion[] {
   if (!taskAssignments.length || !members.length) return [];
 
@@ -91,7 +133,11 @@ function buildFairAssignmentPlan(
     .sort((first, second) => first.dayIndex - second.dayIndex)
     .map((assignment) => {
       const suggestedMember = [...members].sort((first, second) => {
-        const unitDelta = (workload.get(first.id) ?? 0) - (workload.get(second.id) ?? 0);
+        const firstScore =
+          (workload.get(first.id) ?? 0) + taskPreferenceWeight(getTaskPreferenceValue(taskPreferences, task.id, first.id)) * Math.max(1, task.effortUnits);
+        const secondScore =
+          (workload.get(second.id) ?? 0) + taskPreferenceWeight(getTaskPreferenceValue(taskPreferences, task.id, second.id)) * Math.max(1, task.effortUnits);
+        const unitDelta = firstScore - secondScore;
         if (unitDelta !== 0) return unitDelta;
         return first.name.localeCompare(second.name);
       })[0];
@@ -323,6 +369,7 @@ function WasteSeriesBuilder({
 
 export function TasksScreen({
   tasks,
+  taskPreferences,
   darkMode,
   newTitle,
   setNewTitle,
@@ -354,11 +401,16 @@ export function TasksScreen({
   lastDeletedTaskTitle,
   undoDeleteTask,
   assignments,
+  availabilityWindows,
   members,
   selectedWeek,
+  addAvailabilityWindow,
+  deleteAvailabilityWindow,
+  updateTaskPreference,
   updateAssignmentMember,
 }: {
   tasks: TaskTemplate[];
+  taskPreferences: TaskPreference[];
   darkMode: boolean;
   newTitle: string;
   setNewTitle: (value: string) => void;
@@ -390,8 +442,12 @@ export function TasksScreen({
   lastDeletedTaskTitle: string;
   undoDeleteTask: () => void;
   assignments: Assignment[];
+  availabilityWindows: AvailabilityWindow[];
   members: Member[];
   selectedWeek: number;
+  addAvailabilityWindow: (input: AvailabilityWindowInput) => void;
+  deleteAvailabilityWindow: (windowId: string) => void;
+  updateTaskPreference: (taskId: string, memberId: string, value: TaskPreferenceValue | "neutral") => void;
   updateAssignmentMember: (assignmentId: string, memberId: string) => void;
 }) {
   const themed = useThemeStyles(darkMode);
@@ -429,10 +485,14 @@ export function TasksScreen({
       {mode === "longterm" && (
         <LongtermTasksOverview
           assignments={assignments}
+          availabilityWindows={availabilityWindows}
           tasks={tasks}
           members={members}
           selectedWeek={selectedWeek}
           darkMode={darkMode}
+          canManagePlan={canManagePlan}
+          addAvailabilityWindow={addAvailabilityWindow}
+          deleteAvailabilityWindow={deleteAvailabilityWindow}
         />
       )}
 
@@ -634,11 +694,13 @@ export function TasksScreen({
             futureAssignments={futureTaskAssignments}
             weekAssignments={selectedWeekAssignments}
             tasks={tasks}
+            taskPreferences={taskPreferences}
             members={members}
             selectedWeek={selectedWeek}
             updateTask={updateTask}
             deleteTask={deleteTask}
             applyTaskDefaultMember={applyTaskDefaultMember}
+            updateTaskPreference={updateTaskPreference}
             updateAssignmentMember={updateAssignmentMember}
           />
         );
@@ -651,18 +713,32 @@ export function TasksScreen({
 
 function LongtermTasksOverview({
   assignments,
+  availabilityWindows,
   tasks,
   members,
   selectedWeek,
   darkMode,
+  canManagePlan,
+  addAvailabilityWindow,
+  deleteAvailabilityWindow,
 }: {
   assignments: Assignment[];
+  availabilityWindows: AvailabilityWindow[];
   tasks: TaskTemplate[];
   members: Member[];
   selectedWeek: number;
   darkMode: boolean;
+  canManagePlan: boolean;
+  addAvailabilityWindow: (input: AvailabilityWindowInput) => void;
+  deleteAvailabilityWindow: (windowId: string) => void;
 }) {
   const themed = useThemeStyles(darkMode);
+  const [absenceTitle, setAbsenceTitle] = useState("Ferien");
+  const [absenceType, setAbsenceType] = useState<AvailabilityWindow["type"]>("holiday");
+  const [absenceMemberId, setAbsenceMemberId] = useState("household");
+  const [absenceStartWeek, setAbsenceStartWeek] = useState(String(selectedWeek));
+  const [absenceEndWeek, setAbsenceEndWeek] = useState(String(Math.min(53, selectedWeek + 1)));
+  const [calendarMode, setCalendarMode] = useState<"weeks" | "months" | "year">("weeks");
   const weeks = seedData.family.availableWeeks
     .filter((week) => week >= selectedWeek)
     .slice(0, 12)
@@ -677,15 +753,240 @@ function LongtermTasksOverview({
         const task = getTaskById(tasks, assignment.taskId);
         return task?.recurrenceType && task.recurrenceType !== "once";
       }).length;
-      return { week, weekAssignments, units, done, recurring };
+      const availability = availabilityWindows.filter((window) => week >= window.startWeek && week <= window.endWeek);
+      return { week, weekAssignments, units, done, recurring, availability };
     });
+  const yearAssignments = assignments
+    .filter((assignment) => assignment.year === seedData.family.year)
+    .filter((assignment) => getTaskById(tasks, assignment.taskId));
+  const monthSummaries = monthLabels.map((label, index) => {
+    const month = index + 1;
+    const monthAssignments = yearAssignments.filter((assignment) => {
+      const assignmentDate = assignment.date
+        ? new Date(`${assignment.date}T00:00:00Z`)
+        : getDateForWeekDay(assignment.year, assignment.week, assignment.day);
+      return assignmentDate.getUTCMonth() + 1 === month;
+    });
+    const units = monthAssignments.reduce((sum, assignment) => sum + (getTaskById(tasks, assignment.taskId)?.effortUnits || 0), 0);
+    const done = monthAssignments.filter((assignment) => assignment.status === "done").length;
+    const availability = availabilityWindows.filter((window) =>
+      seedData.family.availableWeeks.some((week) => {
+        if (week < window.startWeek || week > window.endWeek) return false;
+        return getDateForWeekDay(seedData.family.year, week, "Montag").getUTCMonth() + 1 === month;
+      }),
+    );
+    return { label, month, assignments: monthAssignments.length, done, units, availability };
+  });
+  const yearUnits = yearAssignments.reduce((sum, assignment) => sum + (getTaskById(tasks, assignment.taskId)?.effortUnits || 0), 0);
+  const yearOpen = yearAssignments.filter((assignment) => assignment.status !== "done").length;
+  const yearRecurring = yearAssignments.filter((assignment) => {
+    const task = getTaskById(tasks, assignment.taskId);
+    return task?.recurrenceType && task.recurrenceType !== "once";
+  }).length;
+  const busiestMonth = [...monthSummaries].sort((first, second) => second.units - first.units)[0];
+
+  function createAvailabilityWindow() {
+    addAvailabilityWindow({
+      title: absenceTitle,
+      type: absenceType,
+      startWeek: Number(absenceStartWeek),
+      endWeek: Number(absenceEndWeek),
+      memberId: absenceMemberId === "household" ? null : absenceMemberId,
+      note: "Noch reine Anzeige. Aufgaben-Pausierung folgt spaeter.",
+    });
+  }
 
   return (
     <View>
       <Text style={[styles.permissionHint, themed.muted, darkMode && styles.mutedDark]}>
         Die kommenden 12 Wochen zeigen geplante Aufgaben, Punkte und Wiederholungen. Bearbeiten und Zuordnen erfolgt im Tab Bearbeiten fuer die gewaehlte KW.
       </Text>
-      {weeks.map((item) => {
+      {canManagePlan && (
+        <View style={styles.segmentedWrap}>
+          {[
+            { id: "weeks", label: "12 Wochen" },
+            { id: "months", label: "Monate" },
+            { id: "year", label: "Jahr" },
+          ].map((item) => {
+            const active = calendarMode === item.id;
+            return (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.segmentButtonCompact, themed.buttonSurface, active && themed.active]}
+                accessibilityRole="button"
+                accessibilityLabel={`Langzeitansicht ${item.label}`}
+                accessibilityState={{ selected: active }}
+                onPress={() => setCalendarMode(item.id as "weeks" | "months" | "year")}
+              >
+                <Text style={[styles.segmentButtonText, themed.muted, active && styles.segmentButtonTextActive]}>{item.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      )}
+      {canManagePlan && (
+        <View style={[styles.longtermMealWeek, darkMode && styles.rowDark, themed.card]}>
+          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Urlaub & Ferien vormerken</Text>
+          <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
+            Diese Markierung ist zunaechst nur sichtbar. Aufgaben werden noch nicht automatisch pausiert oder verteilt.
+          </Text>
+          <View style={styles.segmentedWrap}>
+            {[
+              { id: "holiday", label: "Ferien" },
+              { id: "vacation", label: "Urlaub" },
+            ].map((item) => {
+              const active = absenceType === item.id;
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.segmentButtonCompact, themed.buttonSurface, active && themed.active]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${item.label} vormerken`}
+                  accessibilityState={{ selected: active }}
+                  onPress={() => setAbsenceType(item.id as AvailabilityWindow["type"])}
+                >
+                  <Text style={[styles.segmentButtonText, themed.muted, active && styles.segmentButtonTextActive]}>{item.label}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <TextInput
+            style={[styles.input, themed.input, darkMode && styles.inputDark]}
+            value={absenceTitle}
+            onChangeText={setAbsenceTitle}
+            accessibilityLabel="Titel der Abwesenheit"
+            placeholder="z. B. Sommerferien"
+            placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
+          />
+          <View style={styles.quietTimeRow}>
+            <View style={styles.quietTimeField}>
+              <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Von KW</Text>
+              <TextInput
+                style={[styles.input, themed.input, darkMode && styles.inputDark]}
+                value={absenceStartWeek}
+                onChangeText={setAbsenceStartWeek}
+                keyboardType="numeric"
+                accessibilityLabel="Start-Kalenderwoche der Abwesenheit"
+                placeholder="Start"
+                placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
+              />
+            </View>
+            <View style={styles.quietTimeField}>
+              <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Bis KW</Text>
+              <TextInput
+                style={[styles.input, themed.input, darkMode && styles.inputDark]}
+                value={absenceEndWeek}
+                onChangeText={setAbsenceEndWeek}
+                keyboardType="numeric"
+                accessibilityLabel="End-Kalenderwoche der Abwesenheit"
+                placeholder="Ende"
+                placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
+              />
+            </View>
+          </View>
+          <View style={styles.segmentedWrap}>
+            <TouchableOpacity
+              style={[styles.segmentButtonCompact, themed.buttonSurface, absenceMemberId === "household" && themed.active]}
+              accessibilityRole="button"
+              accessibilityLabel="Abwesenheit fuer ganzen Haushalt"
+              accessibilityState={{ selected: absenceMemberId === "household" }}
+              onPress={() => setAbsenceMemberId("household")}
+            >
+              <Text style={[styles.segmentButtonText, themed.muted, absenceMemberId === "household" && styles.segmentButtonTextActive]}>Haushalt</Text>
+            </TouchableOpacity>
+            {members.map((member) => {
+              const active = absenceMemberId === member.id;
+              return (
+                <TouchableOpacity
+                  key={member.id}
+                  style={[styles.segmentButtonCompact, themed.buttonSurface, active && themed.active]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Abwesenheit fuer ${member.name}`}
+                  accessibilityState={{ selected: active }}
+                  onPress={() => setAbsenceMemberId(member.id)}
+                >
+                  <Text style={[styles.segmentButtonText, themed.muted, active && styles.segmentButtonTextActive]}>{member.shortCode}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+          <TouchableOpacity style={[styles.primaryAction, themed.primary]} accessibilityRole="button" onPress={createAvailabilityWindow}>
+            <Text style={styles.primaryActionText}>Abwesenheit vormerken</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      {!!availabilityWindows.length && (
+        <View style={[styles.longtermMealWeek, darkMode && styles.rowDark, themed.card]}>
+          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Vorgemerkte Abwesenheiten</Text>
+          {availabilityWindows.map((window) => {
+            const member = members.find((item) => item.id === window.memberId);
+            return (
+              <View key={window.id} style={[styles.longtermTaskRow, darkMode && styles.rowDark, themed.card]}>
+                <View style={styles.taskTextBox}>
+                  <Text style={[styles.taskTitle, themed.text, darkMode && styles.textDark]}>{window.title}</Text>
+                  <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+                    KW {window.startWeek}-{window.endWeek} · {member?.name ?? "Haushalt"} · {window.type === "holiday" ? "Ferien" : "Urlaub"}
+                  </Text>
+                </View>
+                {canManagePlan && (
+                  <TouchableOpacity style={styles.deleteButton} accessibilityRole="button" onPress={() => deleteAvailabilityWindow(window.id)}>
+                    <Text style={styles.deleteButtonText}>Loeschen</Text>
+                  </TouchableOpacity>
+                )}
+              </View>
+            );
+          })}
+        </View>
+      )}
+      {calendarMode === "months" && (
+        <View style={[styles.longtermMealWeek, darkMode && styles.rowDark, themed.card]}>
+          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Monatskalender fuer Verwalter</Text>
+          <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
+            Schneller Blick auf Lastspitzen, offene Aufgaben und vorgemerkte Ferien oder Urlaube.
+          </Text>
+          <View style={styles.longtermMealGrid}>
+            {monthSummaries.map((month) => (
+              <View key={month.month} style={[styles.longtermMealCell, darkMode && styles.rowDark, themed.card]}>
+                <Text style={[styles.taskTitle, themed.text, darkMode && styles.textDark]}>{month.label}</Text>
+                <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>{month.assignments} Aufgaben</Text>
+                <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>{formatUnits(month.units)} Punkte</Text>
+                <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+                  {month.availability.length ? `${month.availability.length} Marker` : "keine Marker"}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+      {calendarMode === "year" && (
+        <View style={[styles.longtermMealWeek, darkMode && styles.rowDark, themed.card]}>
+          <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Jahresblick {seedData.family.year}</Text>
+          <View style={styles.summaryGrid}>
+            <View style={[styles.summaryTile, darkMode && styles.rowDark, themed.soft]}>
+              <Text style={[styles.summaryNumber, themed.text, darkMode && styles.textDark]}>{yearAssignments.length}</Text>
+              <Text style={[styles.summaryLabel, themed.muted, darkMode && styles.mutedDark]}>Termine</Text>
+            </View>
+            <View style={[styles.summaryTile, darkMode && styles.rowDark, themed.soft]}>
+              <Text style={[styles.summaryNumber, themed.text, darkMode && styles.textDark]}>{formatUnits(yearUnits)}</Text>
+              <Text style={[styles.summaryLabel, themed.muted, darkMode && styles.mutedDark]}>Punkte</Text>
+            </View>
+            <View style={[styles.summaryTile, darkMode && styles.rowDark, themed.soft]}>
+              <Text style={[styles.summaryNumber, themed.text, darkMode && styles.textDark]}>{yearOpen}</Text>
+              <Text style={[styles.summaryLabel, themed.muted, darkMode && styles.mutedDark]}>Offen</Text>
+            </View>
+          </View>
+          <View style={[styles.compactInfoBox, darkMode && styles.rowDark, themed.soft]}>
+            <Text style={[styles.taskTitle, themed.text, darkMode && styles.textDark]}>Planungsnotiz</Text>
+            <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
+              Staerkster Monat: {busiestMonth?.label ?? "n/a"} mit {formatUnits(busiestMonth?.units ?? 0)} Punkten. Wiederkehrende Termine im Jahr: {yearRecurring}.
+            </Text>
+            <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+              Urlaub/Ferien-Marker werden hier bereits sichtbar. Automatische Pausierung oder Verschiebung folgt in einem separaten Schritt.
+            </Text>
+          </View>
+        </View>
+      )}
+      {calendarMode === "weeks" && weeks.map((item) => {
         const previewAssignments = item.weekAssignments.slice(0, 5);
         const remaining = Math.max(0, item.weekAssignments.length - previewAssignments.length);
         return (
@@ -710,6 +1011,20 @@ function LongtermTasksOverview({
             </View>
             {!item.weekAssignments.length && (
               <Text style={[styles.permissionHint, themed.muted, darkMode && styles.mutedDark]}>Keine Aufgaben geplant.</Text>
+            )}
+            {!!item.availability.length && (
+              <View style={styles.memberPreviewGrid}>
+                {item.availability.map((window) => {
+                  const member = members.find((itemMember) => itemMember.id === window.memberId);
+                  return (
+                    <View key={window.id} style={[styles.memberPreviewChip, darkMode && styles.rowDark, themed.soft]}>
+                      <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+                        {window.title} · {member?.shortCode ?? "HH"}
+                      </Text>
+                    </View>
+                  );
+                })}
+              </View>
             )}
             {previewAssignments.map((assignment) => {
               const task = getTaskById(tasks, assignment.taskId);
@@ -748,11 +1063,13 @@ function TaskTemplateEditor({
   futureAssignments,
   weekAssignments,
   tasks,
+  taskPreferences,
   members,
   selectedWeek,
   updateTask,
   deleteTask,
   applyTaskDefaultMember,
+  updateTaskPreference,
   updateAssignmentMember,
 }: {
   task: TaskTemplate;
@@ -763,6 +1080,7 @@ function TaskTemplateEditor({
   futureAssignments: Assignment[];
   weekAssignments: Assignment[];
   tasks: TaskTemplate[];
+  taskPreferences: TaskPreference[];
   members: Member[];
   selectedWeek: number;
   updateTask: (
@@ -773,6 +1091,7 @@ function TaskTemplateEditor({
   ) => void;
   deleteTask: (taskId: string) => void;
   applyTaskDefaultMember: (taskId: string, memberId: string, fromWeek: number) => void;
+  updateTaskPreference: (taskId: string, memberId: string, value: TaskPreferenceValue | "neutral") => void;
   updateAssignmentMember: (assignmentId: string, memberId: string) => void;
 }) {
   const themed = useThemeStyles(darkMode);
@@ -787,7 +1106,7 @@ function TaskTemplateEditor({
   const [month, setMonth] = useState(String(task.recurrenceMonth || 1));
   const [reminderOptionId, setReminderOptionId] = useState<ReminderOptionId>(getReminderOptionId(task));
   const [reminderTime, setReminderTime] = useState(task.reminderTime || "18:00");
-  const fairAssignmentPlan = buildFairAssignmentPlan(assignments, weekAssignments, tasks, members, task);
+  const fairAssignmentPlan = buildFairAssignmentPlan(assignments, weekAssignments, tasks, members, task, taskPreferences);
   const fairAssignmentChanges = fairAssignmentPlan.filter((suggestion) => {
     const assignment = assignments.find((item) => item.id === suggestion.assignmentId);
     return assignment?.memberId !== suggestion.memberId;
@@ -1005,6 +1324,42 @@ function TaskTemplateEditor({
           darkMode={darkMode}
           canManagePlan={canManagePlan}
         />
+        {canManagePlan && (
+          <View style={[styles.defaultAssignBox, darkMode && styles.rowDark, themed.soft]}>
+            <Text style={[styles.taskTitle, themed.text, darkMode && styles.textDark]}>Faehigkeit & Vorlieben</Text>
+            <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+              Hilft Homely bei fairen Vorschlaegen. Die feste Zuordnung bleibt darunter steuerbar.
+            </Text>
+            {members.map((member) => {
+              const preference = getTaskPreferenceValue(taskPreferences, task.id, member.id);
+              return (
+                <View key={member.id} style={styles.preferenceLine}>
+                  <View style={styles.scoreHeader}>
+                    <View style={[styles.dot, { backgroundColor: member.color }]} />
+                    <Text style={[styles.taskTitle, themed.text, darkMode && styles.textDark]}>{member.name}</Text>
+                  </View>
+                  <View style={styles.preferenceChoiceRow}>
+                    {taskPreferenceOptions.map((option) => {
+                      const active = preference === option.id;
+                      return (
+                        <TouchableOpacity
+                          key={option.id}
+                          style={[styles.preferenceChoiceButton, themed.buttonSurface, active && themed.active]}
+                          accessibilityRole="button"
+                          accessibilityLabel={`${member.name}: ${option.label} fuer ${task.title}`}
+                          accessibilityState={{ selected: active }}
+                          onPress={() => updateTaskPreference(task.id, member.id, option.id)}
+                        >
+                          <Text style={[styles.taskMeta, themed.muted, active && styles.segmentButtonTextActive]}>{option.label}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
         {!!(assignments.length || openFutureAssignments.length) && (
           <View style={styles.editorRow}>
             <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Zuordnung in KW {selectedWeek}</Text>

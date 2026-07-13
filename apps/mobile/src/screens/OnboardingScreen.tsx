@@ -10,6 +10,7 @@ import {
 } from "../data/taskPackages";
 import { styles } from "../styles/plannerStyles";
 import { useThemeStyles } from "../theme/useThemeStyles";
+import { StateMessage } from "../components/StateMessage";
 
 export type OnboardingMemberInput = {
   name: string;
@@ -68,6 +69,7 @@ export function OnboardingScreen({
   const [members, setMembers] = useState<OnboardingMemberInput[]>([]);
   const [householdProfileId, setHouseholdProfileId] = useState("family");
   const [selectedTaskPackageIds, setSelectedTaskPackageIds] = useState<TaskPackageId[]>(defaultTaskPackageIds);
+  const [readyToStart, setReadyToStart] = useState(false);
   const themed = useThemeStyles(darkMode);
   const selectedTaskStats = getTaskPackageSelectionStats(selectedTaskPackageIds);
   const selectedPackageTitles = taskPackages
@@ -95,21 +97,91 @@ export function OnboardingScreen({
     setSelectedTaskPackageIds(packageIds);
   }
 
-  function finish() {
+  function validateSetup() {
     if (!founderName.trim()) {
       Alert.alert("Dein Name fehlt", "Bitte gib zuerst deinen eigenen Vornamen ein. Du wirst als Gruender angelegt.");
-      return;
+      return false;
     }
     if (setupMode === "create" && selectedTaskPackageIds.length === 0) {
       Alert.alert("Aufgabenpaket fehlt", "Bitte waehle mindestens ein Musteraufgabenpaket. Du kannst spaeter Aufgaben entfernen oder ergaenzen.");
-      return;
+      return false;
     }
 
+    return true;
+  }
+
+  function finish() {
+    if (!validateSetup()) return;
+    setReadyToStart(true);
+  }
+
+  function startHousehold(openAccountNext = false) {
     const onboardingMembers = setupMode === "join" ? [{ name: founderName.trim(), role: "owner" }] : [{ name: founderName.trim(), role: "owner" }, ...members];
     completeOnboarding(draftName.trim() || "Mein Haushalt", onboardingMembers, setupMode === "create" ? selectedTaskPackageIds : defaultTaskPackageIds);
-    if (setupMode === "join") {
+    if (openAccountNext || setupMode === "join") {
       openSettingsAfterOnboarding();
     }
+  }
+
+  if (readyToStart) {
+    return (
+      <ScrollView contentContainerStyle={styles.onboardingContent}>
+        <View style={[styles.onboardingPanel, darkMode && styles.panelDark, themed.section]}>
+          <Text style={[styles.eyebrow, themed.muted]}>Startklar</Text>
+          <Text style={[styles.onboardingTitle, themed.text, darkMode && styles.textDark]}>Dein Wochenplan ist bereit</Text>
+          <Text style={[styles.heroText, themed.muted, darkMode && styles.mutedDark]}>
+            Homely startet mit deinem Haushalt, deinen Personen und einem kleinen Plan, den du sofort im Alltag nutzen kannst.
+          </Text>
+          <StateMessage
+            darkMode={darkMode}
+            tone="success"
+            title={setupMode === "join" ? "Einladung als naechster Schritt" : "Startplan angelegt"}
+            message={
+              setupMode === "join"
+                ? "Lege jetzt dein Konto an oder melde dich an. Danach kannst du den Einladungscode annehmen."
+                : `${selectedTaskStats.taskCount} Aufgaben aus ${selectedTaskPackageIds.length} Paket(en) sind vorbereitet. Konto und Cloud kannst du direkt oder spaeter einrichten.`
+            }
+          />
+          <View style={styles.summaryGrid}>
+            <View style={[styles.summaryTile, themed.soft]}>
+              <Text style={[styles.summaryNumber, themed.text, darkMode && styles.textDark]}>{setupMode === "join" ? 1 : members.length + 1}</Text>
+              <Text style={[styles.summaryLabel, themed.muted, darkMode && styles.mutedDark]}>Personen</Text>
+            </View>
+            <View style={[styles.summaryTile, themed.soft]}>
+              <Text style={[styles.summaryNumber, themed.text, darkMode && styles.textDark]}>{selectedTaskStats.taskCount}</Text>
+              <Text style={[styles.summaryLabel, themed.muted, darkMode && styles.mutedDark]}>Aufgaben</Text>
+            </View>
+            <View style={[styles.summaryTile, themed.soft]}>
+              <Text style={[styles.summaryNumber, themed.text, darkMode && styles.textDark]}>{selectedTaskStats.totalUnits}</Text>
+              <Text style={[styles.summaryLabel, themed.muted, darkMode && styles.mutedDark]}>Punkte</Text>
+            </View>
+          </View>
+          <View style={styles.editorActions}>
+            <TouchableOpacity
+              style={[styles.primaryActionInline, themed.primary]}
+              accessibilityRole="button"
+              accessibilityLabel="Wochenplan jetzt ansehen"
+              onPress={() => startHousehold(false)}
+            >
+              <Text style={styles.primaryActionText}>Heute ansehen</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.secondaryAction, themed.soft]}
+              accessibilityRole="button"
+              accessibilityLabel="Konto oder Einladung einrichten"
+              onPress={() => startHousehold(true)}
+            >
+              <Text style={[styles.secondaryActionText, themed.muted]}>
+                {setupMode === "join" ? "Einladung einrichten" : "Konto einrichten"}
+              </Text>
+            </TouchableOpacity>
+          </View>
+          <TouchableOpacity style={[styles.secondaryActionFull, themed.soft]} accessibilityRole="button" onPress={() => setReadyToStart(false)}>
+            <Text style={[styles.secondaryActionText, themed.muted]}>Zurueck bearbeiten</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    );
   }
 
   return (

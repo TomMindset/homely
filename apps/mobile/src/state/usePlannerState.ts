@@ -26,9 +26,12 @@ import {
 import { getStoredItem, removeStoredItems, setStoredItem } from "../utils/localStore";
 import {
   Assignment,
+  AvailabilityWindow,
   DayName,
   MealPlanEntry,
   Member,
+  TaskPreference,
+  TaskPreferenceValue,
   TaskTemplate,
   getCurrentIsoWeek,
   getDateForWeekDay,
@@ -56,6 +59,8 @@ const storageKeys = {
   designSetId: "familyPlanner.designSetId",
   accountEmail: "familyPlanner.accountEmail",
   activeRemoteHouseholdId: "familyPlanner.activeRemoteHouseholdId",
+  availabilityWindows: "familyPlanner.availabilityWindows",
+  taskPreferences: "familyPlanner.taskPreferences",
 };
 
 const defaultHouseholdName = "Mein Haushalt";
@@ -105,6 +110,17 @@ type DeletedTaskSnapshot = {
   assignments: Assignment[];
   custom: boolean;
 };
+
+type AvailabilityWindowInput = {
+  title: string;
+  type: AvailabilityWindow["type"];
+  startWeek: number;
+  endWeek: number;
+  memberId?: string | null;
+  note?: string;
+};
+
+type TaskPreferencePatch = TaskPreferenceValue | "neutral";
 
 function summarizeAssignments(items: Assignment[], tasks: TaskTemplate[]): AssignmentSummary {
   return items.reduce<AssignmentSummary>(
@@ -346,6 +362,8 @@ export function usePlannerState() {
   const [lastDeletedTask, setLastDeletedTask] = useState<DeletedTaskSnapshot | null>(null);
   const [lastCompletionPraise, setLastCompletionPraise] = useState("");
   const [mealOverrides, setMealOverrides] = useState<Record<string, Partial<MealPlanEntry>>>({});
+  const [availabilityWindows, setAvailabilityWindows] = useState<AvailabilityWindow[]>([]);
+  const [taskPreferences, setTaskPreferences] = useState<TaskPreference[]>([]);
   const [familyName, setFamilyNameState] = useState(defaultHouseholdName);
   const [onboardingComplete, setOnboardingComplete] = useState(false);
   const [newTitle, setNewTitle] = useState("");
@@ -383,6 +401,8 @@ export function usePlannerState() {
         designSetIdJson,
         accountEmailJson,
         activeRemoteHouseholdIdJson,
+        availabilityWindowsJson,
+        taskPreferencesJson,
       ] = await Promise.all([
         getStoredItem(storageKeys.doneIds),
         getStoredItem(storageKeys.taskOverrides),
@@ -401,6 +421,8 @@ export function usePlannerState() {
         getStoredItem(storageKeys.designSetId),
         getStoredItem(storageKeys.accountEmail),
         getStoredItem(storageKeys.activeRemoteHouseholdId),
+        getStoredItem(storageKeys.availabilityWindows),
+        getStoredItem(storageKeys.taskPreferences),
       ]);
       const doneIds = new Set<string>(doneIdsJson ? JSON.parse(doneIdsJson) : []);
       const loadedTaskOverrides: Record<string, Partial<TaskTemplate>> = taskOverridesJson ? JSON.parse(taskOverridesJson) : {};
@@ -415,6 +437,8 @@ export function usePlannerState() {
       const loadedCustomAssignments: Assignment[] = customAssignmentsJson ? JSON.parse(customAssignmentsJson) : [];
       const expandedCustomAssignments = ensureRecurringCustomAssignments(loadedCustomTasks, loadedCustomAssignments);
       const loadedMealOverrides: Record<string, Partial<MealPlanEntry>> = mealOverridesJson ? JSON.parse(mealOverridesJson) : {};
+      const loadedAvailabilityWindows: AvailabilityWindow[] = availabilityWindowsJson ? JSON.parse(availabilityWindowsJson) : [];
+      const loadedTaskPreferences: TaskPreference[] = taskPreferencesJson ? JSON.parse(taskPreferencesJson) : [];
       const setupComplete = onboardingCompleteJson === "true";
       const hasNeutralHouseholdMembers = loadedCustomMembers.length > 0 || loadedDeletedMemberIds.size > 0;
       const loadedMembers =
@@ -455,6 +479,8 @@ export function usePlannerState() {
         setStoredItem(storageKeys.customAssignments, JSON.stringify(expandedCustomAssignments)).catch(() => {});
       }
       setMealOverrides(loadedMealOverrides);
+      setAvailabilityWindows(loadedAvailabilityWindows);
+      setTaskPreferences(loadedTaskPreferences);
       setOnboardingComplete(setupComplete && loadedMembers.length > 0);
       setDarkMode(darkModeJson === "true");
       setDesignSetIdState(designSetIdJson ? JSON.parse(designSetIdJson) : "homely");
@@ -973,6 +999,58 @@ export function usePlannerState() {
     });
   }
 
+  function addAvailabilityWindow(input: AvailabilityWindowInput) {
+    if (!canManagePlan) return;
+    const title = input.title.trim();
+    if (!title) return;
+    const startWeek = Math.min(53, Math.max(1, Math.round(input.startWeek || selectedWeek)));
+    const endWeek = Math.min(53, Math.max(startWeek, Math.round(input.endWeek || startWeek)));
+    const window: AvailabilityWindow = {
+      id: `availability-${Date.now()}`,
+      title,
+      type: input.type,
+      startWeek,
+      endWeek,
+      memberId: input.memberId || null,
+      note: input.note?.trim() || undefined,
+    };
+
+    setAvailabilityWindows((items) => {
+      const updated = [...items, window];
+      setStoredItem(storageKeys.availabilityWindows, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
+  }
+
+  function deleteAvailabilityWindow(windowId: string) {
+    if (!canManagePlan) return;
+    setAvailabilityWindows((items) => {
+      const updated = items.filter((item) => item.id !== windowId);
+      setStoredItem(storageKeys.availabilityWindows, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
+  }
+
+  function updateTaskPreference(taskId: string, memberId: string, value: TaskPreferencePatch) {
+    if (!canManagePlan) return;
+    setTaskPreferences((items) => {
+      const withoutCurrent = items.filter((item) => !(item.taskId === taskId && item.memberId === memberId));
+      const updated =
+        value === "neutral"
+          ? withoutCurrent
+          : [
+              ...withoutCurrent,
+              {
+                taskId,
+                memberId,
+                value,
+              },
+            ];
+      setStoredItem(storageKeys.taskPreferences, JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
+  }
+
   function updateFamilyName(name: string) {
     if (!canManagePlan) return;
     setFamilyNameState(name);
@@ -1000,6 +1078,8 @@ export function usePlannerState() {
     setDeletedTaskIds(deletedSeedTaskIds);
     setCustomTasks([]);
     setAssignments(nextAssignments);
+    setAvailabilityWindows([]);
+    setTaskPreferences([]);
     setSelectedMemberId(activeOwner?.id ?? "all");
     setActiveMemberIdState(activeOwner?.id ?? "");
     setOnboardingComplete(true);
@@ -1009,6 +1089,8 @@ export function usePlannerState() {
     setStoredItem(storageKeys.taskOverrides, JSON.stringify({})).catch(() => {});
     setStoredItem(storageKeys.deletedTaskIds, JSON.stringify(deletedSeedTaskIds)).catch(() => {});
     setStoredItem(storageKeys.customTasks, JSON.stringify([])).catch(() => {});
+    setStoredItem(storageKeys.availabilityWindows, JSON.stringify([])).catch(() => {});
+    setStoredItem(storageKeys.taskPreferences, JSON.stringify([])).catch(() => {});
     setStoredItem(storageKeys.activeMemberId, JSON.stringify(activeOwner?.id ?? "")).catch(() => {});
     setStoredItem(storageKeys.onboardingComplete, "true").catch(() => {});
     saveAssignmentState(nextAssignments);
@@ -1061,6 +1143,8 @@ export function usePlannerState() {
     setCustomTasks(nextTasks);
     setAssignments(nextAssignments);
     setMealOverrides(Object.fromEntries(nextMeals.map((meal) => [meal.id, meal])));
+    setAvailabilityWindows([]);
+    setTaskPreferences([]);
     setSelectedMemberId(activeManager?.id ?? "all");
     setActiveMemberIdState(activeManager?.id ?? "");
     setOnboardingComplete(nextMembers.length > 0);
@@ -1072,6 +1156,8 @@ export function usePlannerState() {
     setStoredItem(storageKeys.taskOverrides, JSON.stringify({})).catch(() => {});
     setStoredItem(storageKeys.deletedTaskIds, JSON.stringify(deletedSeedTaskIds)).catch(() => {});
     setStoredItem(storageKeys.customTasks, JSON.stringify(nextTasks)).catch(() => {});
+    setStoredItem(storageKeys.availabilityWindows, JSON.stringify([])).catch(() => {});
+    setStoredItem(storageKeys.taskPreferences, JSON.stringify([])).catch(() => {});
     setStoredItem(storageKeys.mealOverrides, JSON.stringify(Object.fromEntries(nextMeals.map((meal) => [meal.id, meal])))).catch(() => {});
     setStoredItem(storageKeys.activeMemberId, JSON.stringify(activeManager?.id ?? "")).catch(() => {});
     setStoredItem(storageKeys.onboardingComplete, "true").catch(() => {});
@@ -1312,6 +1398,8 @@ export function usePlannerState() {
     setLastDeletedTask(null);
     setLastCompletionPraise("");
     setMealOverrides({});
+    setAvailabilityWindows([]);
+    setTaskPreferences([]);
     setFamilyNameState(defaultHouseholdName);
     setActiveMemberIdState("");
     setOnboardingComplete(false);
@@ -1328,11 +1416,14 @@ export function usePlannerState() {
     setDesignSetIdState("homely");
     setAccountEmail("");
     setActiveRemoteHouseholdIdState("");
+    setStoredItem(storageKeys.availabilityWindows, JSON.stringify([])).catch(() => {});
+    setStoredItem(storageKeys.taskPreferences, JSON.stringify([])).catch(() => {});
     setSyncStatus({ state: "local", message: "Nur lokal gespeichert" });
   }
 
   return {
     accountEmail,
+    addAvailabilityWindow,
     addMember,
     addTask,
     addWasteTask,
@@ -1343,6 +1434,7 @@ export function usePlannerState() {
     applyTaskDefaultMember,
     applyRemoteSnapshot,
     assignments,
+    availabilityWindows,
     canManagePlan,
     completeOnboarding,
     completion,
@@ -1350,6 +1442,7 @@ export function usePlannerState() {
     currentDay,
     darkMode,
     deleteMember,
+    deleteAvailabilityWindow,
     deleteTask,
     designSetId,
     familyName,
@@ -1393,6 +1486,7 @@ export function usePlannerState() {
     setSelectedWeek,
     setView,
     syncStatus,
+    taskPreferences,
     tasks,
     toggleAssignment,
     toggleDarkMode,
@@ -1402,6 +1496,7 @@ export function usePlannerState() {
     updateFamilyName,
     updateMeal,
     updateMember,
+    updateTaskPreference,
     updateTask,
     undoDeleteTask,
     upcomingWeeks,

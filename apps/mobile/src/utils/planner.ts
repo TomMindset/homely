@@ -36,6 +36,14 @@ export type TaskTemplate = {
   reminderLeadDays?: number;
 };
 
+export type TaskPreferenceValue = "preferred" | "capable" | "avoid";
+
+export type TaskPreference = {
+  taskId: string;
+  memberId: string;
+  value: TaskPreferenceValue;
+};
+
 export type ScheduleRule = {
   id: string;
   taskId: string;
@@ -72,6 +80,16 @@ export type MealPlanEntry = {
   day: DayName;
   title: string;
   cookMemberId?: string | null;
+};
+
+export type AvailabilityWindow = {
+  id: string;
+  title: string;
+  type: "vacation" | "holiday";
+  startWeek: number;
+  endWeek: number;
+  memberId?: string | null;
+  note?: string;
 };
 
 const days: DayName[] = ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"];

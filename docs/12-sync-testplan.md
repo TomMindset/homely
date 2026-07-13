@@ -1,6 +1,6 @@
 # Homely Sync-Testplan
 
-Stand: 2026-07-12
+Stand: 2026-07-14
 
 Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder, Aufgaben, Zuordnungen und Essen konsistent zusammenarbeiten.
 
@@ -19,6 +19,8 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 - Startprofile `Familie`, `WG`, `Paar` und `Haus` setzen passende Musteraufgabenpakete.
 - Die Startplan-Vorschau zeigt Aufgabenanzahl, Punkte und aktive Pakete vor dem Start.
 - Mindestens ein Musteraufgabenpaket ist Pflicht.
+- Nach Abschluss erscheint `Dein Wochenplan ist bereit`.
+- `Heute ansehen` fuehrt direkt in die Tagesansicht; `Konto einrichten` fuehrt in den Konto-/Cloud-Bereich.
 - Vorauswahl `Basis` und `Essen` erzeugt einen kleinen Startplan statt aller Excel-Vorlagen.
 - Zusaetzliche Pakete wie `Familie`, `WG`, `Putzen` oder `Extras` aktivieren passende weitere Aufgaben.
 - Nicht gewaehlte Standardaufgaben erscheinen nicht in `Heute`, koennen unter `Aufgaben` aber ueber `Vorlagen wiederherstellen` reaktiviert werden.
@@ -36,6 +38,10 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 
 - `Plan hochladen` speichert Mitglieder, Aufgaben, Zuordnungen und Essen.
 - `Plan laden` springt auf `Heute` und zeigt den Supabase-Stand.
+- Wenn lokaler und Cloud-Stand unterschiedlich sind, erscheint eine Konfliktentscheidung.
+- `Cloud uebernehmen` ersetzt den lokalen Stand.
+- `Lokal sichern` schreibt den lokalen Stand in die Cloud.
+- `Spaeter` ueberschreibt nichts.
 - Der Status-Chip zeigt `Plan aus Supabase geladen` oder `... gespeichert`.
 - Bei Sync-Fehlern zeigt der Kopfbereich einen ruhigen Hinweis, dass lokale Aenderungen erhalten bleiben.
 - Nach App-Neustart bleibt der aktive Sync-Haushalt gesetzt.
@@ -55,10 +61,15 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 - Muelltermin bleibt nach `Plan hochladen` und `Plan laden` erhalten.
 - `Uebliche Zustaendigkeit` setzt offene Termine einer Aufgabe ab der gewaehlten KW auf eine Standardperson.
 - Bereits erledigte Aufgaben werden durch `Uebliche Zustaendigkeit` nicht veraendert.
+- `Faehigkeit & Vorlieben` laesst je Person `Mag`, `Kann`, `Neutral` oder `Lieber nicht` setzen.
+- Fairness-Vorschlaege beruecksichtigen diese Praeferenzen sichtbar.
 - Beim Bearbeiten zeigt `Fair verteilen` einen bestaetigungspflichtigen Vorschlag nach aktueller Wochenlast.
 - Aufgabe loeschen verschwindet nach `Plan laden`.
 - Direkt nach dem Loeschen kann `Rueckgaengig` die Aufgabe inklusive Zuordnungen wiederherstellen.
 - Aufgaben-Langzeituebersicht zeigt kommende Wochen und nicht nur die aktuelle KW.
+- Aufgaben-Langzeituebersicht zeigt fuer Verwalter auch Monatskalender und Jahresblick.
+- Urlaub/Ferien lassen sich fuer Haushalt oder einzelne Personen vormerken und wieder loeschen.
+- Urlaub/Ferien-Marker sind sichtbar, pausieren aber noch keine Aufgaben.
 - Wochenansicht zeigt fuer leere Tage einen klaren Leerzustand statt eines leeren Abschnitts.
 
 ## Essensplan
@@ -88,6 +99,7 @@ Ziel: pruefen, ob der lokale Homely-Plan und Supabase fuer Haushalt, Mitglieder,
 
 - Fairness zeigt je Person Soll, Plan und Ist als Zahlen und Balken.
 - Wochenverlauf zeigt die Spanne der letzten sichtbaren Wochen.
+- `Plan fairer machen` zeigt mehrere Vorschlaege und wendet sie erst nach Bestaetigung an.
 - Wenn eine Aufgabe erledigt wird, erscheint auf `Heute` ein kurzer `Danke-Moment`.
 
 ## Push-Benachrichtigungen
