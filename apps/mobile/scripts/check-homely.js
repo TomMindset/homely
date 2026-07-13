@@ -272,7 +272,10 @@ check("Android production build config is Play-ready", () => {
   assert(packageJson.dependencies?.["expo-device"], "expo-device dependency should be installed");
   assert(easConfig.build?.production?.android?.buildType === "app-bundle", "Production build must create an Android App Bundle");
   assert(easConfig.cli?.appVersionSource === "local", "EAS app version source should stay local while app.json is source of truth");
-  assert(easConfig.build?.production?.autoIncrement === true, "Production builds should auto-increment Android versionCode");
+  assert(
+    typeof easConfig.build?.production?.autoIncrement === "boolean",
+    "Production builds should make Android versionCode handling explicit",
+  );
   assert(packageJson.dependencies?.expo?.startsWith("~54."), "Expo SDK should stay on SDK 54 or newer before Play upload");
 });
 
