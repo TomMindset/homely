@@ -21,7 +21,7 @@
     ],
     "android": {
       "package": "com.homely.haushaltsmanager",
-      "versionCode": 5,
+      "versionCode": 6,
       "permissions": [
         "POST_NOTIFICATIONS"
       ],

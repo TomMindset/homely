@@ -10,6 +10,7 @@ export function MemberButton({
   onPress,
   darkMode = false,
   disabled = false,
+  compact = false,
 }: {
   active: boolean;
   label: string;
@@ -17,6 +18,7 @@ export function MemberButton({
   onPress: () => void;
   darkMode?: boolean;
   disabled?: boolean;
+  compact?: boolean;
 }) {
   const theme = useThemeColors();
   const palette = darkMode ? theme.dark : theme;
@@ -25,6 +27,7 @@ export function MemberButton({
     <TouchableOpacity
       style={[
         styles.memberButton,
+        compact && styles.memberButtonCompact,
         { backgroundColor: palette.paper, borderColor: palette.border },
         active && { backgroundColor: palette.primary, borderColor: palette.primary },
         disabled && styles.disabledButton,
@@ -36,7 +39,9 @@ export function MemberButton({
       onPress={onPress}
     >
       {color && <View style={[styles.dot, { backgroundColor: color }]} />}
-      <Text style={[styles.memberButtonText, { color: palette.muted }, active && styles.memberButtonTextActive]}>{label}</Text>
+      <Text style={[styles.memberButtonText, compact && styles.memberButtonTextCompact, { color: palette.muted }, active && styles.memberButtonTextActive]}>
+        {label}
+      </Text>
     </TouchableOpacity>
   );
 }

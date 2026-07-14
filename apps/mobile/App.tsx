@@ -99,8 +99,6 @@ export default function App() {
             selectedWeek={planner.selectedWeek}
             selectedDay={planner.selectedDay}
             setSelectedDay={planner.setSelectedDay}
-            selectedMemberId={planner.selectedMemberId}
-            setSelectedMemberId={planner.setSelectedMemberId}
             activeMemberId={planner.activeMemberId}
             setActiveMemberId={planner.selectActiveMember}
             founderMemberId={planner.founderMemberId}

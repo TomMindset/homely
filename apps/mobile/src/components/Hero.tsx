@@ -14,8 +14,6 @@ export function Hero({
   selectedWeek,
   selectedDay,
   setSelectedDay,
-  selectedMemberId,
-  setSelectedMemberId,
   activeMemberId,
   setActiveMemberId,
   founderMemberId,
@@ -30,8 +28,6 @@ export function Hero({
   selectedWeek: number;
   selectedDay: DayName;
   setSelectedDay: (day: DayName) => void;
-  selectedMemberId: string;
-  setSelectedMemberId: (memberId: string) => void;
   activeMemberId: string;
   setActiveMemberId: (memberId: string) => void;
   founderMemberId: string;
@@ -70,41 +66,43 @@ export function Hero({
         : null;
 
   return (
-    <View style={[styles.panel, darkMode && styles.panelDark, panelTheme]}>
-      <Text style={[styles.eyebrow, { color: palette.muted }]}>{familyName}</Text>
-      <Text style={[styles.heroTitle, { color: palette.ink }]}>
-        KW {selectedWeek}: {selectedDay}
-      </Text>
-      <Text style={[styles.heroText, { color: palette.muted }]}>Aufgaben, Essen und Fairness fuer deinen Haushalt an einem Ort.</Text>
-      <TouchableOpacity
-        style={[styles.syncPill, darkMode && styles.rowDark, { backgroundColor: syncTone.backgroundColor, borderColor: syncTone.borderColor }]}
-        disabled={syncStatus.state === "syncing"}
-        accessibilityRole="button"
-        accessibilityLabel={`Sync-Status: ${syncStatus.message}`}
-        accessibilityHint="Tippen, um Cloud-Daten zu aktualisieren"
-        accessibilityState={{ disabled: syncStatus.state === "syncing" }}
-        onPress={refreshRemoteSnapshot}
-      >
-        <View
-          style={[
-            styles.syncDot,
-            {
-              backgroundColor:
-                syncStatus.state === "error"
-                  ? "#ef4444"
-                  : syncStatus.state === "syncing"
-                    ? "#f59e0b"
-                    : syncStatus.state === "synced"
-                      ? palette.primary
-                      : palette.muted,
-            },
-          ]}
-        />
-        <Text style={[styles.syncText, { color: syncTone.color }]}>{syncStatus.message}</Text>
-        {syncStatus.state !== "syncing" && (
-          <Text style={[styles.syncText, { color: syncTone.color }]}>Aktualisieren</Text>
-        )}
-      </TouchableOpacity>
+    <View style={[styles.contextPanel, darkMode && styles.panelDark, panelTheme]}>
+      <View style={styles.contextTopRow}>
+        <View style={styles.contextTitleBox}>
+          <Text style={[styles.eyebrow, { color: palette.muted }]}>{familyName}</Text>
+          <Text style={[styles.contextTitle, { color: palette.ink }]}>
+            KW {selectedWeek} · {selectedDay}
+          </Text>
+        </View>
+        <TouchableOpacity
+          style={[styles.syncPill, styles.syncPillCompact, darkMode && styles.rowDark, { backgroundColor: syncTone.backgroundColor, borderColor: syncTone.borderColor }]}
+          disabled={syncStatus.state === "syncing"}
+          accessibilityRole="button"
+          accessibilityLabel={`Sync-Status: ${syncStatus.message}`}
+          accessibilityHint="Tippen, um Cloud-Daten zu aktualisieren"
+          accessibilityState={{ disabled: syncStatus.state === "syncing" }}
+          onPress={refreshRemoteSnapshot}
+        >
+          <View
+            style={[
+              styles.syncDot,
+              {
+                backgroundColor:
+                  syncStatus.state === "error"
+                    ? "#ef4444"
+                    : syncStatus.state === "syncing"
+                      ? "#f59e0b"
+                      : syncStatus.state === "synced"
+                        ? palette.primary
+                        : palette.muted,
+              },
+            ]}
+          />
+          <Text style={[styles.syncText, styles.syncTextCompact, { color: syncTone.color }]} numberOfLines={1}>
+            {syncStatus.message}
+          </Text>
+        </TouchableOpacity>
+      </View>
       {syncNotice && (
         <StateMessage
           darkMode={darkMode}
@@ -122,7 +120,7 @@ export function Hero({
           return (
             <TouchableOpacity
               key={day}
-              style={[styles.dayButton, inactivePillTheme, active && activePillTheme]}
+              style={[styles.dayButton, styles.contextDayButton, inactivePillTheme, active && activePillTheme]}
               accessibilityRole="button"
               accessibilityLabel={`${day} anzeigen`}
               accessibilityState={{ selected: active }}
@@ -136,26 +134,15 @@ export function Hero({
           );
         })}
       </ScrollView>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.rowScroll}>
-        <MemberButton active={selectedMemberId === "all"} label="Alle" darkMode={darkMode} onPress={() => setSelectedMemberId("all")} />
-        {members.map((member) => (
-          <MemberButton
-            key={member.id}
-            active={selectedMemberId === member.id}
-            label={member.name}
-            color={member.color}
-            darkMode={darkMode}
-            onPress={() => setSelectedMemberId(member.id)}
-          />
-        ))}
-      </ScrollView>
-      <Text style={[styles.taskMeta, { color: palette.muted }]}>Du bist gerade</Text>
+      <View style={[styles.contextDivider, { backgroundColor: palette.border }]} />
+      <Text style={[styles.taskMeta, { color: palette.muted }]}>Du bist</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.rowScroll}>
         {members.map((member) => {
           const switchAllowed = activeMemberIsFounder || member.id === founderMemberId || member.id === activeMemberId;
           return (
             <MemberButton
               key={member.id}
+              compact
               active={activeMemberId === member.id}
               label={`${member.name} · ${roleLabel(member.role)}`}
               color={member.color}
@@ -171,11 +158,8 @@ export function Hero({
           Mitgliederwechsel ist in dieser lokalen Version nur in der Gruenderansicht offen.
         </Text>
       )}
-      <View style={[styles.progressBox, darkMode && styles.progressBoxDark, softTheme]}>
-        <Text style={[styles.progressNumber, { color: palette.ink }]}>{completion}%</Text>
-        <Text style={[styles.muted, { color: palette.muted }]}>
-          {canManagePlan ? "sichtbare Aufgaben erledigt" : "Mitgliedsansicht: Verwaltung gesperrt"}
-        </Text>
+      <View style={[styles.contextProgressLine, softTheme]}>
+        <View style={[styles.contextProgressFill, { width: `${completion}%`, backgroundColor: canManagePlan ? palette.primary : palette.muted }]} />
       </View>
     </View>
   );

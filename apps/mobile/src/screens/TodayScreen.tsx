@@ -137,11 +137,15 @@ export function TodayScreen({
   const openUnits = displayedOpenAssignments.reduce((sum, assignment) => sum + (getTaskById(tasks, assignment.taskId)?.effortUnits || 0), 0);
 
   return (
-    <View style={[styles.section, darkMode && styles.sectionDark, themed.section]}>
-      <Text style={[styles.eyebrow, themed.muted]}>Heute</Text>
-      <Text style={[styles.sectionTitle, themed.text, darkMode && styles.textDark]}>
-        {mode === "mine" ? "Dein Tag" : "Haushalt heute"}
-      </Text>
+    <View style={[styles.section, styles.todaySection, darkMode && styles.sectionDark, themed.section]}>
+      <View style={styles.todayTitleRow}>
+        <View style={styles.taskTextBox}>
+          <Text style={[styles.eyebrow, themed.muted]}>Heute</Text>
+          <Text style={[styles.sectionTitle, styles.todayTitle, themed.text, darkMode && styles.textDark]}>
+            {mode === "mine" ? "Dein Tag" : "Haushalt heute"}
+          </Text>
+        </View>
+      </View>
       <View style={styles.segmented}>
         {[
           { id: "mine", label: "Meine" },
@@ -209,8 +213,8 @@ export function TodayScreen({
           </View>
         </EmptyState>
       )}
-      {todayGroups.map((group) => (
-        <View key={group.id} style={styles.todayGroup}>
+      {todayGroups.map((group, index) => (
+        <View key={group.id} style={[styles.todayGroup, index > 0 && styles.todayGroupSeparated]}>
           <View style={styles.todayListHeader}>
             <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>{group.title}</Text>
             <Text style={[styles.readinessBadge, themed.muted, darkMode && styles.mutedDark]}>{group.detail}</Text>
@@ -229,10 +233,10 @@ export function TodayScreen({
           ))}
         </View>
       ))}
-      <View style={[styles.mealBox, darkMode && styles.mealBoxDark, themed.soft]}>
+      <View style={[styles.mealBox, styles.todayMealBox, darkMode && styles.mealBoxDark, themed.soft]}>
         <View style={styles.mealHeaderRow}>
           <View style={styles.taskTextBox}>
-            <Text style={[styles.eyebrow, themed.muted]}>Essen</Text>
+            <Text style={[styles.eyebrow, themed.muted]}>Heute essen</Text>
             <Text style={[styles.mealTitle, themed.text, darkMode && styles.textDark]}>{meal?.title || "Noch kein Essen geplant"}</Text>
           </View>
           <TouchableOpacity style={[styles.editButton, { borderColor: themed.theme.primary }]} accessibilityRole="button" onPress={() => setView("meals")}>
@@ -285,19 +289,19 @@ function TodayFocus({
   const copy =
     mode === "mine"
       ? ownOpenCount > 0
-        ? "Erledige zuerst deine offenen Aufgaben. Wenn du eine andere Aufgabe uebernimmst, zaehlt sie fuer dich als erledigt."
+        ? "Prioritaet: deine offenen Aufgaben. Uebernommene Aufgaben zaehlen fuer dich."
         : otherOpenCount > 0
-          ? "Fuer dich ist nichts offen. Du kannst trotzdem im Haushalt helfen."
-          : "Keine offenen Aufgaben fuer heute. Homely bleibt ruhig, wenn alles erledigt ist."
+          ? "Dein Part ist frei. Du kannst trotzdem im Haushalt helfen."
+          : "Keine offenen Aufgaben fuer heute."
       : householdOpenCount > 0
-        ? "Alle offenen Aufgaben des Tages auf einen Blick. Tippen markiert die Aufgabe als von dir erledigt."
+        ? "Alle offenen Aufgaben des Tages. Tippen markiert als von dir erledigt."
         : "Alle sichtbaren Aufgaben fuer heute sind abgehakt.";
 
   return (
     <View style={[styles.todayFocusBand, themed.soft]}>
       <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>{title}</Text>
       <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>{copy}</Text>
-      <View style={styles.summaryGrid}>
+      <View style={[styles.summaryGrid, styles.todaySummaryGrid]}>
         <View style={[styles.summaryTile, darkMode && styles.rowDark, themed.card]}>
           <Text style={[styles.summaryNumber, themed.text, darkMode && styles.textDark]}>{openCount}</Text>
           <Text style={[styles.summaryLabel, themed.muted, darkMode && styles.mutedDark]}>Offen</Text>
