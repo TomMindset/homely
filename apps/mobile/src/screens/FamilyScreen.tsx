@@ -4,6 +4,7 @@ import { memberColors, roleLabel, roleOptions } from "../constants/planner";
 import { styles } from "../styles/plannerStyles";
 import { useThemeStyles } from "../theme/useThemeStyles";
 import { Member } from "../utils/planner";
+import { StateMessage } from "../components/StateMessage";
 
 export function FamilyScreen({
   familyName,
@@ -15,6 +16,7 @@ export function FamilyScreen({
   updateMember,
   deleteMember,
   resetLocalData,
+  openInviteSettings,
 }: {
   familyName: string;
   members: Member[];
@@ -25,16 +27,22 @@ export function FamilyScreen({
   updateMember: (memberId: string, patch: Partial<Member>) => void;
   deleteMember: (memberId: string) => void;
   resetLocalData: () => void;
+  openInviteSettings?: (prefill: { name: string; shortCode: string; role: string }) => void;
 }) {
   const [familyNameDraft, setFamilyNameDraft] = useState(familyName);
   const [newName, setNewName] = useState("");
   const [newShortCode, setNewShortCode] = useState("");
   const [newRole, setNewRole] = useState("child");
   const [newColor, setNewColor] = useState(memberColors[0]);
+  const [inviteHint, setInviteHint] = useState<{ name: string; shortCode: string; role: string } | null>(null);
   const themed = useThemeStyles(darkMode);
 
   function submitMember() {
-    addMember(newName, newShortCode, newRole, newColor);
+    const name = newName.trim();
+    const shortCode = newShortCode.trim().slice(0, 2).toUpperCase();
+    if (!name || !shortCode) return;
+    addMember(name, shortCode, newRole, newColor);
+    setInviteHint({ name, shortCode, role: newRole });
     setNewName("");
     setNewShortCode("");
     setNewRole("child");
@@ -124,6 +132,25 @@ export function FamilyScreen({
           <TouchableOpacity style={[styles.primaryAction, themed.primary]} accessibilityRole="button" accessibilityLabel="Person hinzufuegen" onPress={submitMember}>
             <Text style={styles.primaryActionText}>Person hinzufuegen</Text>
           </TouchableOpacity>
+          {!!inviteHint && (
+            <StateMessage
+              darkMode={darkMode}
+              tone="success"
+              title={`${inviteHint.name} ist angelegt`}
+              message="Du kannst die Person jetzt per Einladungscode in deinen Cloud-Haushalt holen oder spaeter unter Mehr > Konto > Einladen einladen."
+            >
+              {openInviteSettings && (
+                <TouchableOpacity
+                  style={[styles.primaryActionInline, themed.primary]}
+                  accessibilityRole="button"
+                  accessibilityLabel={`${inviteHint.name} jetzt einladen`}
+                  onPress={() => openInviteSettings(inviteHint)}
+                >
+                  <Text style={styles.primaryActionText}>Jetzt einladen</Text>
+                </TouchableOpacity>
+              )}
+            </StateMessage>
+          )}
         </>
       )}
       {members.map((member) => (

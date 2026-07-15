@@ -179,6 +179,7 @@ export const styles = StyleSheet.create({
   mealName: { flex: 1, color: "#202124", fontWeight: "800" },
   mealActions: { flexDirection: "row", flexWrap: "wrap", justifyContent: "flex-end", gap: 8, width: "100%" },
   input: { minHeight: 44, borderRadius: 8, borderWidth: 1, borderColor: "#ded6ca", paddingHorizontal: 12, marginBottom: 10, backgroundColor: "#fffaf2" },
+  textArea: { minHeight: 108, paddingTop: 12, paddingBottom: 12 },
   inputDark: { backgroundColor: "#0f172a", borderColor: "#334155", color: "#f8fafc" },
   primaryAction: { minHeight: 44, borderRadius: 8, backgroundColor: brand.primary, alignItems: "center", justifyContent: "center", marginBottom: 16 },
   primaryActionInline: { flexGrow: 1, flexShrink: 1, minWidth: 132, minHeight: 44, borderRadius: 8, backgroundColor: brand.primary, alignItems: "center", justifyContent: "center" },

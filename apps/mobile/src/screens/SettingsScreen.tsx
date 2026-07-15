@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Alert, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, Linking, Share, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { designSets, memberColors, roleOptions, type DesignSetId, type ViewId } from "../constants/planner";
 import { checkDatabaseHealth } from "../services/databaseHealthService";
 import {
@@ -10,6 +10,7 @@ import {
   listRemoteHouseholds,
   listRemoteMemberships,
   mapRemoteMembershipToMember,
+  type CreatedInvitation,
   type RemoteHousehold,
   type RemoteMembership,
 } from "../services/householdService";
@@ -41,6 +42,11 @@ import { FamilyScreen } from "./FamilyScreen";
 
 type SettingsTab = "account" | "household" | "appearance" | "readiness";
 type AccountArea = "identity" | "households" | "sync" | "invites" | "notifications" | "diagnostics" | "danger";
+type InvitePrefill = {
+  name: string;
+  shortCode: string;
+  role: string;
+};
 type SyncStatus = {
   state: "local" | "syncing" | "synced" | "error";
   message: string;
@@ -81,6 +87,45 @@ function plannerSnapshotSignature(snapshot: PlannerSnapshot) {
 
 function snapshotSummary(snapshot: PlannerSnapshot) {
   return `${snapshot.members.length} Personen · ${snapshot.tasks.length} Aufgaben · ${snapshot.assignments.length} Termine · ${snapshot.meals.length} Essen`;
+}
+
+function defaultInvitationMessage(familyName: string) {
+  return `Ich habe unseren Haushalt "${familyName}" in Homely angelegt, damit wir Aufgaben, Essen und Fairness gemeinsam organisieren koennen.`;
+}
+
+function buildInvitationText({
+  familyName,
+  senderName,
+  inviteName,
+  code,
+  personalMessage,
+}: {
+  familyName: string;
+  senderName: string;
+  inviteName: string;
+  code: string;
+  personalMessage: string;
+}) {
+  const greeting = inviteName.trim() ? `Hallo ${inviteName.trim()},` : "Hallo,";
+  const sender = senderName.trim() || "Ich";
+  const household = familyName.trim() || "unser Haushalt";
+  const visibleCode = code || "CODE";
+
+  return [
+    greeting,
+    "",
+    `${sender} moechte dich in Homely zum Haushalt "${household}" einladen.`,
+    "",
+    personalMessage.trim() || defaultInvitationMessage(household),
+    "",
+    "So trittst du bei:",
+    "1. Homely installieren",
+    "2. Mit deiner eigenen E-Mail anmelden oder ein Konto erstellen",
+    "3. Mehr > Konto > Einladen > Einladung annehmen oeffnen",
+    `4. Einladungscode eingeben: ${visibleCode}`,
+    "",
+    `Einladungscode: ${visibleCode}`,
+  ].join("\n");
 }
 
 const readinessItems = [
@@ -221,7 +266,15 @@ export function SettingsScreen({
   resetLocalData: () => void;
 }) {
   const [tab, setTab] = useState<SettingsTab>("account");
+  const [requestedAccountArea, setRequestedAccountArea] = useState<AccountArea | null>(null);
+  const [invitePrefill, setInvitePrefill] = useState<InvitePrefill | null>(null);
   const themed = useThemeStyles(darkMode);
+
+  function openInviteSettings(prefill?: InvitePrefill) {
+    if (prefill) setInvitePrefill(prefill);
+    setRequestedAccountArea("invites");
+    setTab("account");
+  }
 
   return (
     <View>
@@ -291,6 +344,10 @@ export function SettingsScreen({
           setActiveRemoteHouseholdId={setActiveRemoteHouseholdId}
           setView={setView}
           updateAccountEmail={updateAccountEmail}
+          requestedAccountArea={requestedAccountArea}
+          clearRequestedAccountArea={() => setRequestedAccountArea(null)}
+          invitePrefill={invitePrefill}
+          clearInvitePrefill={() => setInvitePrefill(null)}
         />
       )}
 
@@ -305,6 +362,7 @@ export function SettingsScreen({
           updateMember={updateMember}
           deleteMember={deleteMember}
           resetLocalData={resetLocalData}
+          openInviteSettings={openInviteSettings}
         />
       )}
 
@@ -337,6 +395,10 @@ function AccountSettings({
   setActiveRemoteHouseholdId,
   setView,
   updateAccountEmail,
+  requestedAccountArea,
+  clearRequestedAccountArea,
+  invitePrefill,
+  clearInvitePrefill,
 }: {
   accountEmail: string;
   activeMemberName: string;
@@ -352,6 +414,10 @@ function AccountSettings({
   setActiveRemoteHouseholdId: (householdId: string) => void;
   setView: (view: ViewId) => void;
   updateAccountEmail: (email: string) => void;
+  requestedAccountArea: AccountArea | null;
+  clearRequestedAccountArea: () => void;
+  invitePrefill: InvitePrefill | null;
+  clearInvitePrefill: () => void;
 }) {
   const themed = useThemeStyles(darkMode);
   const [email, setEmail] = useState(accountEmail);
@@ -373,6 +439,10 @@ function AccountSettings({
   const [inviteName, setInviteName] = useState("");
   const [inviteShortCode, setInviteShortCode] = useState("");
   const [inviteEmail, setInviteEmail] = useState("");
+  const [invitePhone, setInvitePhone] = useState("");
+  const [inviteSenderName, setInviteSenderName] = useState("");
+  const [invitePersonalMessage, setInvitePersonalMessage] = useState("");
+  const [lastInvitation, setLastInvitation] = useState<CreatedInvitation | null>(null);
   const [inviteRole, setInviteRole] = useState("child");
   const [inviteCode, setInviteCode] = useState("");
   const primaryMember = members.find((member) => member.role === "owner") ?? members[0];
@@ -385,10 +455,46 @@ function AccountSettings({
     assignments,
     meals,
   };
+  const invitationCode = lastInvitation?.invitation_code ?? "";
+  const invitationText = buildInvitationText({
+    familyName,
+    senderName: inviteSenderName || activeMemberName || primaryMember?.name || "",
+    inviteName,
+    code: invitationCode,
+    personalMessage: invitePersonalMessage,
+  });
 
   useEffect(() => {
     setEmail(accountEmail);
   }, [accountEmail]);
+
+  useEffect(() => {
+    if (!inviteSenderName.trim()) {
+      setInviteSenderName(activeMemberName || primaryMember?.name || "");
+    }
+  }, [activeMemberName, inviteSenderName, primaryMember?.name]);
+
+  useEffect(() => {
+    if (!invitePersonalMessage.trim()) {
+      setInvitePersonalMessage(defaultInvitationMessage(familyName));
+    }
+  }, [familyName, invitePersonalMessage]);
+
+  useEffect(() => {
+    if (!requestedAccountArea) return;
+    setAccountArea(requestedAccountArea);
+    clearRequestedAccountArea();
+  }, [clearRequestedAccountArea, requestedAccountArea]);
+
+  useEffect(() => {
+    if (!invitePrefill) return;
+    setAccountArea("invites");
+    setInviteName(invitePrefill.name);
+    setInviteShortCode(invitePrefill.shortCode);
+    setInviteRole(invitePrefill.role);
+    setLastInvitation(null);
+    clearInvitePrefill();
+  }, [clearInvitePrefill, invitePrefill]);
 
   useEffect(() => {
     getCurrentAuthEmail()
@@ -541,16 +647,56 @@ function AccountSettings({
   }
 
   function createInvitation() {
-    runSyncAction(() =>
-      createRemoteInvitation({
-        householdId: activeRemoteHouseholdId,
-        displayName: inviteName,
-        shortCode: inviteShortCode,
-        invitedEmail: inviteEmail,
-        role: inviteRole,
-        color: memberColors[(remoteMemberships.length + 1) % memberColors.length],
-      }),
+    runSyncAction(
+      () =>
+        createRemoteInvitation({
+          householdId: activeRemoteHouseholdId,
+          displayName: inviteName,
+          shortCode: inviteShortCode,
+          invitedEmail: inviteEmail,
+          role: inviteRole,
+          color: memberColors[(remoteMemberships.length + 1) % memberColors.length],
+        }),
+      (invitation) => {
+        if (!invitation) return;
+        setLastInvitation(invitation);
+        setInviteCode(invitation.invitation_code);
+      },
     );
+  }
+
+  function openInvitationEmail() {
+    const subject = encodeURIComponent(`Einladung zu Homely: ${familyName}`);
+    const body = encodeURIComponent(invitationText);
+    const target = inviteEmail.trim() ? encodeURIComponent(inviteEmail.trim()) : "";
+    Linking.openURL(`mailto:${target}?subject=${subject}&body=${body}`).catch(() => {
+      setMessage("E-Mail-App konnte nicht geoeffnet werden.");
+    });
+  }
+
+  function shareInvitation() {
+    Share.share({
+      title: `Einladung zu Homely: ${familyName}`,
+      message: invitationText,
+    }).catch(() => {
+      setMessage("Teilen konnte nicht geoeffnet werden.");
+    });
+  }
+
+  function openInvitationWhatsApp() {
+    const text = encodeURIComponent(invitationText);
+    Linking.openURL(`whatsapp://send?text=${text}`).catch(() => {
+      setMessage("WhatsApp konnte nicht geoeffnet werden. Nutze alternativ Teilen, E-Mail oder SMS.");
+    });
+  }
+
+  function openInvitationSms() {
+    const phone = invitePhone.trim();
+    const body = encodeURIComponent(invitationText);
+    const target = phone ? encodeURIComponent(phone) : "";
+    Linking.openURL(`sms:${target}?body=${body}`).catch(() => {
+      setMessage("SMS-App konnte nicht geoeffnet werden.");
+    });
   }
 
   function acceptInvitation() {
@@ -761,6 +907,7 @@ function AccountSettings({
     { id: "danger", label: "Daten" },
   ];
   const pushControlsDisabled = !isSignedIn || busy || !pushStatus;
+  const invitationCreateDisabled = !isSignedIn || !activeRemoteHouseholdId || !canManagePlan || busy;
   const quietHoursChanged =
     !!pushStatus && (quietStartDraft !== pushStatus.quietHoursStart || quietEndDraft !== pushStatus.quietHoursEnd);
 
@@ -959,15 +1106,199 @@ function AccountSettings({
       {accountArea === "invites" && (
         <>
           <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
-        <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Einladungen</Text>
-        <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
-          Erstelle einen Einladungscode fuer eine Person. Die eingeladene Person meldet sich mit eigener E-Mail an und tritt dem Haushalt ueber
-          diesen Code bei. SMS bleibt eine spaetere Komfort-Option.
-        </Text>
-        {!canManagePlan && (
-          <Text style={[styles.taskMeta, darkMode && styles.mutedDark]}>Nur Gruender und Verwalter duerfen spaeter Einladungen erstellen.</Text>
-        )}
-      </View>
+            <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Einladungen</Text>
+            <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>
+              Eingeladene Personen nutzen ihre eigene E-Mail und treten deinem aktiven Cloud-Haushalt per persoenlichem Einladungscode bei.
+              Homely bereitet nur Code und Text vor. Teilen, WhatsApp, E-Mail oder SMS laufen ueber dein Geraet und deine Accounts.
+            </Text>
+            {!isSignedIn && (
+              <StateMessage
+                darkMode={darkMode}
+                tone="warning"
+                title="Erst anmelden"
+                message="Einladungen brauchen ein Konto, damit der Code sicher einem Cloud-Haushalt zugeordnet wird."
+              />
+            )}
+            {isSignedIn && !activeRemoteHouseholdId && (
+              <StateMessage
+                darkMode={darkMode}
+                tone="warning"
+                title="Cloud-Haushalt fehlt"
+                message="Lege zuerst unter Cloud einen Haushalt an oder lade einen bestehenden Haushalt."
+              >
+                <TouchableOpacity style={[styles.secondaryActionFull, themed.soft]} accessibilityRole="button" onPress={() => setAccountArea("sync")}>
+                  <Text style={[styles.secondaryActionText, themed.muted]}>Zur Cloud</Text>
+                </TouchableOpacity>
+              </StateMessage>
+            )}
+            {!canManagePlan && (
+              <StateMessage
+                darkMode={darkMode}
+                tone="warning"
+                title="Keine Verwaltungsrolle"
+                message="Nur Gruender und Verwalter koennen Einladungen fuer diesen Haushalt erstellen."
+              />
+            )}
+          </View>
+
+          <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
+            <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Person & Kontakt</Text>
+            <TextInput
+              style={[styles.input, themed.input, darkMode && styles.inputDark]}
+              value={inviteName}
+              onChangeText={(value) => {
+                setInviteName(value);
+                setLastInvitation(null);
+              }}
+              placeholder="Name der eingeladenen Person"
+              placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
+            />
+            <TextInput
+              style={[styles.input, themed.input, darkMode && styles.inputDark]}
+              value={inviteShortCode}
+              onChangeText={(value) => {
+                setInviteShortCode(value);
+                setLastInvitation(null);
+              }}
+              placeholder="Kuerzel"
+              placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
+            />
+            <TextInput
+              style={[styles.input, themed.input, darkMode && styles.inputDark]}
+              value={inviteEmail}
+              onChangeText={setInviteEmail}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              placeholder="E-Mail fuer Einladung optional"
+              placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
+            />
+            <TextInput
+              style={[styles.input, themed.input, darkMode && styles.inputDark]}
+              value={invitePhone}
+              onChangeText={setInvitePhone}
+              keyboardType="phone-pad"
+              placeholder="Mobilnummer fuer SMS optional"
+              placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
+            />
+            <View style={styles.segmented}>
+              {roleOptions.map((role) => {
+                const active = inviteRole === role.id;
+                return (
+                  <TouchableOpacity
+                    key={role.id}
+                    style={[styles.segmentButton, themed.buttonSurface, active && themed.active]}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Rolle ${role.label} fuer Einladung`}
+                    accessibilityState={{ selected: active }}
+                    onPress={() => setInviteRole(role.id)}
+                  >
+                    <Text style={[styles.segmentButtonText, themed.muted, active && styles.segmentButtonTextActive]}>{role.label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          </View>
+
+          <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
+            <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Nachricht</Text>
+            <TextInput
+              style={[styles.input, themed.input, darkMode && styles.inputDark]}
+              value={inviteSenderName}
+              onChangeText={setInviteSenderName}
+              placeholder="Absendername"
+              placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
+            />
+            <TextInput
+              style={[styles.input, styles.textArea, themed.input, darkMode && styles.inputDark]}
+              value={invitePersonalMessage}
+              onChangeText={setInvitePersonalMessage}
+              multiline
+              textAlignVertical="top"
+              placeholder="Persoenlicher Einladungstext"
+              placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
+            />
+            <View style={[styles.compactInfoBox, darkMode && styles.rowDark, themed.soft]}>
+              <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Vorschau</Text>
+              <Text style={[styles.privacyText, themed.muted, darkMode && styles.mutedDark]}>{invitationText}</Text>
+            </View>
+          </View>
+
+          <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
+            <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Code & Versand</Text>
+            <TouchableOpacity
+              style={[styles.primaryAction, themed.primary, invitationCreateDisabled && styles.disabledButton]}
+              disabled={invitationCreateDisabled}
+              accessibilityRole="button"
+              accessibilityLabel="Einladungscode erzeugen"
+              accessibilityState={{ disabled: invitationCreateDisabled }}
+              onPress={createInvitation}
+            >
+              <Text style={styles.primaryActionText}>Einladungscode erzeugen</Text>
+            </TouchableOpacity>
+            {!!lastInvitation && (
+              <>
+                <View style={[styles.compactInfoBox, darkMode && styles.rowDark, themed.soft]}>
+                  <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>Einladungscode</Text>
+                  <Text style={[styles.heroTitle, themed.text, darkMode && styles.textDark]}>{lastInvitation.invitation_code}</Text>
+                  <Text style={[styles.taskMeta, themed.muted, darkMode && styles.mutedDark]}>
+                    Gueltig bis {new Date(lastInvitation.expires_at).toLocaleDateString("de-DE")}.
+                  </Text>
+                </View>
+                <View style={styles.editorActions}>
+                  <TouchableOpacity
+                    style={[styles.primaryActionInline, themed.primary]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Einladung teilen"
+                    onPress={shareInvitation}
+                  >
+                    <Text style={styles.primaryActionText}>Teilen</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.secondaryAction, themed.soft]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Einladung per WhatsApp vorbereiten"
+                    onPress={openInvitationWhatsApp}
+                  >
+                    <Text style={[styles.secondaryActionText, themed.muted]}>WhatsApp</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.secondaryAction, themed.soft]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Einladung per E-Mail vorbereiten"
+                    onPress={openInvitationEmail}
+                  >
+                    <Text style={[styles.secondaryActionText, themed.muted]}>E-Mail</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.secondaryAction, themed.soft]}
+                    accessibilityRole="button"
+                    accessibilityLabel="Einladung per SMS vorbereiten"
+                    onPress={openInvitationSms}
+                  >
+                    <Text style={[styles.secondaryActionText, themed.muted]}>SMS</Text>
+                  </TouchableOpacity>
+                </View>
+              </>
+            )}
+            {!!message && (
+              <StateMessage darkMode={darkMode} tone={getMessageTone(message)} title="Einladungsstatus" message={message} />
+            )}
+          </View>
+
+          <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
+            <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Einladung annehmen</Text>
+            <TextInput
+              style={[styles.input, themed.input, darkMode && styles.inputDark]}
+              value={inviteCode}
+              onChangeText={setInviteCode}
+              autoCapitalize="characters"
+              placeholder="Einladungscode"
+              placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
+            />
+            <TouchableOpacity style={[styles.primaryAction, themed.primary, busy && styles.disabledButton]} disabled={busy} onPress={acceptInvitation}>
+              <Text style={styles.primaryActionText}>Beitreten</Text>
+            </TouchableOpacity>
+          </View>
         </>
       )}
 
@@ -1318,75 +1649,6 @@ function AccountSettings({
       </View>
       )}
 
-      {accountArea === "invites" && (
-        <>
-          <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
-        <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Einladung erstellen</Text>
-        <TextInput
-          style={[styles.input, themed.input, darkMode && styles.inputDark]}
-          value={inviteName}
-          onChangeText={setInviteName}
-          placeholder="Name der eingeladenen Person"
-          placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
-        />
-        <TextInput
-          style={[styles.input, themed.input, darkMode && styles.inputDark]}
-          value={inviteShortCode}
-          onChangeText={setInviteShortCode}
-          placeholder="Kuerzel"
-          placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
-        />
-        <TextInput
-          style={[styles.input, themed.input, darkMode && styles.inputDark]}
-          value={inviteEmail}
-          onChangeText={setInviteEmail}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          placeholder="E-Mail optional"
-          placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
-        />
-        <View style={styles.segmented}>
-          {roleOptions.map((role) => {
-            const active = inviteRole === role.id;
-            return (
-              <TouchableOpacity
-                key={role.id}
-                style={[styles.segmentButton, themed.buttonSurface, active && themed.active]}
-                onPress={() => setInviteRole(role.id)}
-              >
-                <Text style={[styles.segmentButtonText, themed.muted, active && styles.segmentButtonTextActive]}>{role.label}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-        <TouchableOpacity
-          style={[styles.primaryAction, themed.primary, (!canManagePlan || busy) && styles.disabledButton]}
-          disabled={!canManagePlan || busy}
-          accessibilityRole="button"
-          accessibilityLabel="Einladungscode erzeugen"
-          accessibilityState={{ disabled: !canManagePlan || busy }}
-          onPress={createInvitation}
-        >
-          <Text style={styles.primaryActionText}>Einladungscode erzeugen</Text>
-        </TouchableOpacity>
-      </View>
-
-          <View style={[styles.settingsCard, darkMode && styles.rowDark, themed.card]}>
-        <Text style={[styles.dayHeading, themed.text, darkMode && styles.textDark]}>Einladung annehmen</Text>
-        <TextInput
-          style={[styles.input, themed.input, darkMode && styles.inputDark]}
-          value={inviteCode}
-          onChangeText={setInviteCode}
-          autoCapitalize="characters"
-          placeholder="Einladungscode"
-          placeholderTextColor={darkMode ? "#94a3b8" : "#8d8479"}
-        />
-        <TouchableOpacity style={[styles.primaryAction, themed.primary, busy && styles.disabledButton]} disabled={busy} onPress={acceptInvitation}>
-          <Text style={styles.primaryActionText}>Beitreten</Text>
-        </TouchableOpacity>
-      </View>
-        </>
-      )}
     </View>
   );
 }
